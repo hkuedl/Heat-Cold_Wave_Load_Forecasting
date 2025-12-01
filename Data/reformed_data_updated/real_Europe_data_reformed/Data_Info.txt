@@ -1,0 +1,6 @@
+温度为摄氏度
+负荷单位为MW
+时间为UTC时间
+
+修正:
+已将load_actual_entsoe_transparency换为load_actual_entsoe_power_statistics
