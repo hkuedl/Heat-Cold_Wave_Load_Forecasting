@@ -6,6 +6,10 @@ This repository includes codes for article "Electricity Load Forecasting Under E
 
 Authors: Nan Lu, Dalin Qin, Yangze Zhou, Yi Wang
 
+## Overview
+We propose an Extreme Synthesis-Disentanglement Forecasting (ESDF) framework to overcome the dual challenges of data scarcity and low-fidelity synthesis for load forecasting under heat and cold waves. The framework is designed as a three-stage pipeline that first strategically augments the training data with high-quality synthetic samples under extreme scenarios and then purifies the learned representations before making a final, resilient forecast. The overview of the proposed framework is presented in the following figure, comprising three critical components: (1) Extreme Classifier-Guided Diffusion Synthesis, (2) Fidelity-Aware Representation Disentanglement, and (3) Resilience-Enhanced Forecasting.
+
+
 ## Data Preparation
 
 Source data can be found in the following [OneDrive Link](https://connecthkuhk-my.sharepoint.com/:f:/g/personal/lnan_connect_hku_hk/ElbMtnE75hdEpmiEk_3uA-0BgV2nvZp92RA1GWOXn2CxNg?e=efORZP). Users can download the filefold "Data" from this link, and replace the filefold "Data" in this repository. Note that due to privacy concerns regarding certain data, we are only releasing two processed public datasets: Europe and PJM data. Each data file includes the hourly time index, electricity load, and temperature data.
