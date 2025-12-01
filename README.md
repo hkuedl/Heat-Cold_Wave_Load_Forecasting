@@ -8,5 +8,5 @@ Authors: Nan Lu, Dalin Qin, Yangze Zhou, Yi Wang
 
 ## Data Preparation
 
-Source data can be found in the following [OneDrive Link](https://connecthkuhk-my.sharepoint.com/:f:/g/personal/lnan_connect_hku_hk/ElbMtnE75hdEpmiEk_3uA-0BgV2nvZp92RA1GWOXn2CxNg?e=efORZP). Note that according to data 
+Source data can be found in the following [OneDrive Link](https://connecthkuhk-my.sharepoint.com/:f:/g/personal/lnan_connect_hku_hk/ElbMtnE75hdEpmiEk_3uA-0BgV2nvZp92RA1GWOXn2CxNg?e=efORZP). Users can download the filefold "Data" from this link, and replace the filefold "Data" in this repository. Note that due to privacy concerns regarding certain data, we are only releasing two processed public datasets: Europe and PJM data.
 
