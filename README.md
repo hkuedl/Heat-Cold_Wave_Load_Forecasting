@@ -20,11 +20,11 @@ The overview of the proposed framework is presented in the following figure, com
 Source data can be found in the following [OneDrive Link](https://connecthkuhk-my.sharepoint.com/:f:/g/personal/lnan_connect_hku_hk/ElbMtnE75hdEpmiEk_3uA-0BgV2nvZp92RA1GWOXn2CxNg?e=efORZP). Users can download the filefold "Data" from this link, and replace the filefold "Data" in this repository. Note that due to privacy concerns regarding certain data, we are only releasing two processed public datasets: Europe and PJM data. Each data file includes the hourly time index, electricity load, and temperature data.
 
 ## Requirements
-Required libraries are provided in file "requirements.txt". Please use *pip install -r requirements.txt* to ensure that codes can be executed.
+Required libraries are provided in file `requirements.txt`. Please use *pip install -r requirements.txt* to ensure that codes can be executed.
 
 
 ## Experiments
-Codes related to experiments are provided in filefold "forecasting_using_generated_samples". 
+Codes related to experiments are provided in filefold `forecasting_using_generated_samples`. 
 
 
 Codes for **(1) Extreme Classifier-Guided Diffusion Synthesis** can be found in the following files: `Dataset_Loader_2D.py`, `diff_Model_2D. py`, `Models_2D.py`, `diff_training_2D.py`, and `generate_new_samples_2D.py`; The trained diffusion model parameters will be saved in filefold `Model_parameters`.
