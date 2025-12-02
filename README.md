@@ -24,7 +24,7 @@ Required libraries are provided in file `requirements.txt`. Please use "*pip ins
 
 
 ## Experiments
-Codes related to experiments are provided in filefold `forecasting_using_generated_samples`. 
+Codes related to experiments are provided in filefold `forecasting_using_generated_samples.py`. 
 
 
 Codes for **(1) Extreme Classifier-Guided Diffusion Synthesis** can be found in the following files: `Dataset_Loader_2D.py`, `diff_Model_2D. py`, `Models_2D.py`, `diff_training_2D.py`, and `generate_new_samples_2D.py`; The trained diffusion model parameters will be saved in filefold `Model_parameters`.
