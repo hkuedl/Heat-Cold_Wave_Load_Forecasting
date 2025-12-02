@@ -10,7 +10,7 @@ Authors: Nan Lu, Dalin Qin, Yangze Zhou, Yi Wang
 We propose an Extreme Synthesis-Disentanglement Forecasting (ESDF) framework to overcome the dual challenges of data scarcity and low-fidelity synthesis for load forecasting under heat and cold waves. The framework is designed as a three-stage pipeline that first strategically augments the training data with high-quality synthetic samples under extreme scenarios and then purifies the learned representations before making a final, resilient forecast. The overview of the proposed framework is presented in the following figure, comprising three critical components: (1) Extreme Classifier-Guided Diffusion Synthesis, (2) Fidelity-Aware Representation Disentanglement, and (3) Resilience-Enhanced Forecasting.
 
 <p align="center">
-<img src="github_figs/overall_framework_01.jpg" alt="整体框架图" width="700" style="max-width: 100%; border: 1px solid #eee; border-radius: 5px;" />
+<img src="github_figs/overall_framework_01.jpg" alt="整体框架图" width="600" style="max-width: 100%; border: 1px solid #eee; border-radius: 5px;" />
 </p>
 
 ## Data Preparation
