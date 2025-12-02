@@ -32,7 +32,7 @@ Codes for **(1) Extreme Classifier-Guided Diffusion Synthesis** can be found in 
 
 codes for **(2) Fidelity-Aware Representation Disentanglement** and **(3) Resilience-Enhanced Forecasting** can be found in the following files: `Forecasting_Models.py` and `Forecasting_model_training`. The experimental results (nMAE and nRMSE of the tested regions) will be saved in a csv file (e.g. "Europe.csv"). Best forecasting models on the validation set will be saved as pt files.
 
-Users can simply run the file "Forecasting_model_training" to execute the experiments. The experiments include some baselines and ablation comparison methods (see in Forecasting_model_training): 
+Users can simply run the file `Forecasting_model_training` to execute the experiments. The experiments include some baselines and ablation comparison methods (see in Forecasting_model_training): 
 
 `results_visualization(model_type='ANN', 'LSTM', or 'CNN')`: simple baseline models
 
