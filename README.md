@@ -7,7 +7,9 @@ This repository includes codes for article "Electricity Load Forecasting Under E
 Authors: Nan Lu, Dalin Qin, Yangze Zhou, Yi Wang
 
 ## Overview
-We propose an Extreme Synthesis-Disentanglement Forecasting (ESDF) framework to overcome the dual challenges of data scarcity and low-fidelity synthesis for load forecasting under heat and cold waves. The framework is designed as a three-stage pipeline that first strategically augments the training data with high-quality synthetic samples under extreme scenarios and then purifies the learned representations before making a final, resilient forecast. The overview of the proposed framework is presented in the following figure, comprising three critical components: (1) Extreme Classifier-Guided Diffusion Synthesis, (2) Fidelity-Aware Representation Disentanglement, and (3) Resilience-Enhanced Forecasting.
+We propose an Extreme Synthesis-Disentanglement Forecasting (ESDF) framework to overcome the dual challenges of data scarcity and low-fidelity synthesis for load forecasting under heat and cold waves. The framework is designed as a three-stage pipeline that first strategically augments the training data with high-quality synthetic samples under extreme scenarios and then purifies the learned representations before making a final, resilient forecast. 
+
+The overview of the proposed framework is presented in the following figure, comprising three critical components: (1) Extreme Classifier-Guided Diffusion Synthesis, (2) Fidelity-Aware Representation Disentanglement, and (3) Resilience-Enhanced Forecasting.
 
 <p align="center">
 <img src="github_figs/overall_framework_01.jpg" alt="overall framework" width="600" style="max-width: 100%; border: 1px solid #eee; border-radius: 5px;" />
@@ -22,7 +24,13 @@ Required libraries are provided in file "requirements.txt". Please use *pip inst
 
 
 ## Experiments
-Codes related to experiments are provided in filefold "forecasting_using_generated_samples". Codes for **(1) Extreme Classifier-Guided Diffusion Synthesis** can be found in the following files: "Dataset_Loader_2D.py", "diff_Model_2D. py", "Models_2D.py", "diff_training_2D.py", and "generate_new_samples_2D.py"; codes for **(2) Fidelity-Aware Representation Disentanglement** and **(3) Resilience-Enhanced Forecasting** can be found in the following files: "Forecasting_Models.py" and "Forecasting_model_training". The experimental results (nMAE and nRMSE of the tested regions) will be saved in a csv file (e.g. "Europe.csv"). To simplify the 
+Codes related to experiments are provided in filefold "forecasting_using_generated_samples". 
+
+
+Codes for **(1) Extreme Classifier-Guided Diffusion Synthesis** can be found in the following files: "Dataset_Loader_2D.py", "diff_Model_2D. py", "Models_2D.py", "diff_training_2D.py", and "generate_new_samples_2D.py"; 
+
+
+codes for **(2) Fidelity-Aware Representation Disentanglement** and **(3) Resilience-Enhanced Forecasting** can be found in the following files: "Forecasting_Models.py" and "Forecasting_model_training". The experimental results (nMAE and nRMSE of the tested regions) will be saved in a csv file (e.g. "Europe.csv"). To simplify the 
 
 
 ## Visualization
