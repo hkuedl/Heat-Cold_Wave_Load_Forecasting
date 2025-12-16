@@ -15,18 +15,19 @@ typ = torch.float32
 def data_scaler(country='Belgium', strat_time = '2021/03/28/00', end_time = '2023/05/31/23'):
     data = pd.read_csv('../Data/reformed_data_updated/PJM_reformed_data/{}.csv'.format(country), header=0, usecols=['Date_Hour', 'Load', 'Temperature'])
 
+    ## Handling daylight saving time and standard time
     def replace_hour(date_hour_str):
-        parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-        hour = int(parts[-1])  # 获取小时部分并转换为整数
+        parts = date_hour_str.rsplit('/', 1) 
+        hour = int(parts[-1])  # Extract the hour portion and convert it to an integer
 
-        # 如果小时在 1 到 24 之间，递减小时
+        # If the hour is between 1 and 24, decrease the hour.
         if 1 <= hour <= 24:
-            new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-            return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+            new_hour = (hour - 1) if hour != 1 else 0  
+            return parts[0] + f'/{new_hour:02d}'  
         if hour == 25:
             new_hour = 23
             return parts[0] + f'/{new_hour:02d}'
-        return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+        return date_hour_str  
 
     data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -34,16 +35,12 @@ def data_scaler(country='Belgium', strat_time = '2021/03/28/00', end_time = '202
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Date_Hour']) >= start_date) & (pd.to_datetime(data['Date_Hour']) <= end_date)]
 
-    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    #data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # ensure datetime type
     load = np.array(data['Load'])
     temperature = np.array(data['Temperature'])
 
-    # 过滤掉load中的零值
+    # filter missing values
     load_nonzero = load[load != 0]
-
-    # 如果过滤后数组不为空，使用非零值的最小值；否则使用0或其他默认值
     load_min = load_nonzero.min() if len(load_nonzero) > 0 else 0
 
     return max(load), load_min, max(temperature), min(temperature)
@@ -64,22 +61,20 @@ def clear_diff_data(country='Belgium', strat_time = '2021/03/28/00', end_time = 
         date1 = strat_time
         date2 = '2023/07/01'
         datetime1 = datetime.strptime(date1, '%Y/%m/%d/%H')
-        # 第二个日期没有时间，默认为00:00
         datetime2 = datetime.strptime(date2, '%Y/%m/%d')
         days_difference = abs((datetime2 - datetime1).days)
 
     def replace_hour(date_hour_str):
-        parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-        hour = int(parts[-1])  # 获取小时部分并转换为整数
+        parts = date_hour_str.rsplit('/', 1) 
+        hour = int(parts[-1])  
 
-        # 如果小时在 1 到 24 之间，递减小时
         if 1 <= hour <= 24:
-            new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-            return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+            new_hour = (hour - 1) if hour != 1 else 0  
+            return parts[0] + f'/{new_hour:02d}'  
         if hour == 25:
             new_hour = 23
             return parts[0] + f'/{new_hour:02d}'
-        return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+        return date_hour_str  # If no valid hour is found, return the original string.
 
     data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -88,9 +83,7 @@ def clear_diff_data(country='Belgium', strat_time = '2021/03/28/00', end_time = 
     data = data[(pd.to_datetime(data['Date_Hour']) >= start_date) & (pd.to_datetime(data['Date_Hour']) <= end_date)]
 
 
-    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    #data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    data['Date_Hour'] = pd.to_datetime(data['Date_Hour']) 
 
     maxload, minload, maxtem, mintem = data_scaler(country)
 
@@ -178,4 +171,5 @@ def diff_dataloader(country='Belgium'):
 
 
 clear_diff_data('Allegheny Power System')
+
 #diff_dataloader(country='Allegheny Power System')
