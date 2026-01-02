@@ -4,7 +4,7 @@
 
 This repository includes codes for article "Electricity Load Forecasting Under Extreme Heat and Clod Waves" and a brief introduction of how to use them.
 
-Authors: Nan Lu, Dalin Qin, Yangze Zhou, Yi Wang
+Authors: Nan Lu, Dalin Qin, Yangze Zhou, Lei Bai, Qingsong Wen, Chongqing Kang, Yi Wang
 
 ## Overview
 We propose an Extreme Synthesis-Disentanglement Forecasting (ESDF) framework to overcome the dual challenges of data scarcity and low-fidelity synthesis for load forecasting under heat and cold waves. The framework is designed as a three-stage pipeline that first strategically augments the training data with high-quality synthetic samples under extreme scenarios and then purifies the learned representations before making a final, resilient forecast. 
