@@ -9,7 +9,7 @@ import csv
 import pandas as pd
 from Forecasting_Models import ANN_model, LSTM_model, CNN_Model, \
     Separation_network, mmd, orthogonal_loss, Separation_network_LSTM, \
-    Separation_network_CNN, NBEATS, impactnet, ConvLSTM
+    Separation_network_CNN, NBEATS, impactnet
 from Informer.informer_model import Informer
 from Autoformer.autoformer_model import Autoformer
 from torch import Tensor
@@ -41,7 +41,7 @@ def data_scaler(country='Belgium', strat_time = '2015/01/01/00', end_time = '201
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
 
-    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  #ensure Data_Hour is datetime type
    
     load = np.array(data['Load'])
     temperature = np.array(data['Temperature'])
@@ -1521,3 +1521,4 @@ for test_country in test_country_list:
 
 
 #visualization('Austria')
+
