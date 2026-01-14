@@ -61,14 +61,14 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
 
-    cmap = plt.get_cmap('GnBu')  # 黄-橙-红色标，适用于热力值
+    cmap = plt.get_cmap('GnBu')  # Yellow-Orange-Red Label, for thermal values
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
     sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    cbar.ax.tick_params(labelsize=ticksize)
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -85,7 +85,7 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
         end_date = pd.to_datetime(end_time)
 
         data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
 
         load = np.array(data['Load'])
         temperature = np.array(data['Temperature'])
@@ -144,14 +144,14 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
         print(i)
         guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
-        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
+        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # Guangdong
 
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        #loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        #loc="lower right",  
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  # Use the main image coordinate system
         borderpad=0
     )
 
@@ -164,9 +164,9 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right", 
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2), 
+        bbox_transform=ax.transAxes,  # Use the main image coordinate system
         borderpad=0
     )
 
@@ -175,18 +175,18 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     bins = np.linspace(
         0,
         1,
-        100  # 分箱数量
+        100  # number of bins
     )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
+    # Calculate the histogram data for two distributions (np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # use the shared bin_edges
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
+        # bottom=counts_hotwave,
         align='edge',
         color='grey',
         alpha=0.7,
@@ -195,10 +195,10 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     )
 
     ax_inset_2.bar(
-      x=bin_edges[:-1],  # 分箱左边界
+      x=bin_edges[:-1],  # left edge of bins
       height=counts_hotwave,
-      width=np.diff(bin_edges),  # 分箱宽度
-      align='edge',  # 柱子对齐分箱边缘
+      width=np.diff(bin_edges),  # width of bins
+      align='edge',  
       color='salmon',
       alpha=1,
       linewidth=1,
@@ -238,7 +238,7 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
+
     ax.set_title("Heatwave in Guangdong", fontsize=titlesize)
     plt.tight_layout()
 
@@ -267,14 +267,14 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
 
-    cmap = plt.get_cmap('RdPu')  # 黄-橙-红色标，适用于热力值
+    cmap = plt.get_cmap('RdPu')  # Yellow-Orange-Red Label, for thermal values
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
+    sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    cbar.ax.tick_params(labelsize=ticksize) 
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -349,14 +349,14 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
         print(i)
         guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
-        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
+        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8) 
 
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
@@ -369,27 +369,27 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  # 分箱数量
+        100  
     )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
+    # (np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(coldwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
+        # bottom=counts_hotwave,  
         align='edge',
         color='grey',
         alpha=0.7,
@@ -398,10 +398,10 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  # 分箱左边界
+        x=bin_edges[:-1],  
         height=counts_hotwave,
-        width=np.diff(bin_edges),  # 分箱宽度
-        align='edge',  # 柱子对齐分箱边缘
+        width=np.diff(bin_edges),  
+        align='edge',  
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -434,7 +434,6 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
     ax.set_title("Coldwave in Hunan", fontsize=titlesize)
     plt.tight_layout()
     fig.savefig('figures/load_change_in_{}.pdf'.format(region))
@@ -6120,6 +6119,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
