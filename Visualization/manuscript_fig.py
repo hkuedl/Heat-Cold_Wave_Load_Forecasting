@@ -464,14 +464,14 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
 
-    cmap = plt.get_cmap('Oranges')  # 黄-橙-红色标，适用于热力值
+    cmap = plt.get_cmap('Oranges')  # Yellow-Orange-Red Label, for thermal values
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
+    sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    cbar.ax.tick_params(labelsize=ticksize)  
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -521,7 +521,7 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
 
         for j in range(30, load.shape[0] // 24 - 3 - 30 - 6):
             if np.any(np.isnan(load[24 * j: 24 * (j + 1)])) or np.any(np.isnan(temperature[24 * i: 24 * (i + 1)])):
-                continue  # 跳过当前循环
+                continue  
 
             ## define the cold wave index
             ECI_sig = np.mean(T_i_list[j:j + 3]) - T_05
@@ -556,14 +556,14 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
         #target = world[world['NAME'].str.contains(country, case=False)]
         #print(target)
 
-        target.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
+        target.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  
 
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2), 
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
@@ -576,27 +576,27 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  # 分箱数量
+        100  
     )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
+    # (np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(coldwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges) 
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
+        # bottom=counts_hotwave, 
         align='edge',
         color='grey',
         alpha=0.7,
@@ -605,10 +605,10 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  # 分箱左边界
+        x=bin_edges[:-1],  
         height=counts_hotwave,
-        width=np.diff(bin_edges),  # 分箱宽度
-        align='edge',  # 柱子对齐分箱边缘
+        width=np.diff(bin_edges), 
+        align='edge',  
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -640,7 +640,6 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
     ax.set_title("Coldwave in Europe", fontsize=titlesize)
     plt.tight_layout()
     #plt.axis('equal')
@@ -664,15 +663,15 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
     usa_states = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip")
-    # 筛选出德州数据
+    
 
 
 
-    cmap = plt.get_cmap('YlOrRd')  # 黄-橙-红色标，适用于热力值
+    cmap = plt.get_cmap('YlOrRd')  # Yellow-Orange-Red Label, for thermal values
     norm = Normalize(0, 0.5)
 
     counties = gpd.read_file("map_data/tl_2021_us_county.zip")
-    # 筛选出德州的县，'STATEFP'是州的FIPS代码，德州是'48'
+    # Filter counties in Texas, where ‘STATEFP’ is the state's FIPS code, and Texas is ‘48’.
     tx_counties = counties[counties['STATEFP'] == '48'].copy()
     erlot_region_mapping = {
         'Victoria': 'COAST',
@@ -904,20 +903,20 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
 
 
 
-    # 将映射字典转换为一个DataFrame，方便后续合并
+    # Convert the mapping dictionary into a DataFrame for easier subsequent merging.
     mapping_df = pd.DataFrame(list(erlot_region_mapping.items()), columns=['NAME', 'ERCOT_Region'])
 
-    # 3. 将ERCOT区域信息合并到德州地理数据中
-    # 使用左连接，确保所有德州县都被保留，即使有些县不在您的映射里（这些县区域会为NaN）
+    # 3. Integrating ERCOT regional information into Texas geographic data
+    # Use a left join to ensure all Texas counties are retained, even if some counties are not in the map (these county areas will be NaN).
     tx_counties_with_region = tx_counties.merge(mapping_df, on='NAME', how='left')
     regions_gdf = tx_counties_with_region.dissolve(by='ERCOT_Region')
 
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
+    sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    cbar.ax.tick_params(labelsize=ticksize)  
 
 
     colors = []
@@ -935,7 +934,7 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
         end_date = pd.to_datetime(end_time)
 
         data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
 
         load = np.array(data['Load'])
         temperature = np.array(data['Temperature'])
@@ -987,9 +986,7 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
         colors.append(color)
 
         print(i)
-        #guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
-        #guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
 
     region_colors = {
@@ -1001,7 +998,6 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
         'SOUTH_CENTRAL': colors[5],
         'SOUTHERN': colors[6],
         'WEST': colors[7]
-        # 为其他区域添加颜色...
     }
     colors = [region_colors.get(region, 'gray') for region in regions_gdf.index]
 
@@ -1014,9 +1010,9 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes, 
         borderpad=0
     )
 
@@ -1029,27 +1025,27 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  # 分箱数量
+        100 
     )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
+    # (np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges) 
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
+        # bottom=counts_hotwave, 
         align='edge',
         color='grey',
         alpha=0.7,
@@ -1058,10 +1054,10 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  # 分箱左边界
+        x=bin_edges[:-1], 
         height=counts_hotwave,
-        width=np.diff(bin_edges),  # 分箱宽度
-        align='edge',  # 柱子对齐分箱边缘
+        width=np.diff(bin_edges),
+        align='edge',  
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -1089,12 +1085,11 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     ax_inset.set_xlabel('Hour', fontsize=labelsize)
     ax_inset.set_ylabel('Load', fontsize=labelsize)
 
-    ax.set_xlim(-108, -93)  # 德州经度范围
-    ax.set_ylim(22, 38)  # 德州纬度范围
+    ax.set_xlim(-108, -93)  # Longitude range of Texas
+    ax.set_ylim(22, 38)  # Latitude range of Texas
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
     ax.set_title("Heatwave in Texas", fontsize=titlesize)
     plt.tight_layout()
     #plt.axis('equal')
@@ -1121,27 +1116,26 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     plt.axis('equal')
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
-    # 筛选出德州数据
     states = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip")
 
-    # 筛选出Maharashtra和Delhi
+    # filter Maharashtra and Delhi
     target_regions = states[states['name'].isin(['Maharashtra', 'Delhi'])]
 
 
 
-    cmap = plt.get_cmap('Blues')  # 黄-橙-红色标，适用于热力值
+    cmap = plt.get_cmap('Blues')  # Yellow-Orange-Red Label, for thermal values
     norm = Normalize(0, 0.5)
 
-    #india = world[world['NAME'] == 'India']  # 确保为WGS84坐标系
+    #india = world[world['NAME'] == 'India']  # Ensure the WGS84 coordinate system is used.
     #india.plot(ax=ax, color=cmap(norm(1.2)), edgecolor='white', alpha=0.7, linewidth=1)
 
 
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
+    sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    cbar.ax.tick_params(labelsize=ticksize)  
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -1157,7 +1151,7 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
         end_date = pd.to_datetime(end_time)
 
         data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
 
         load = np.array(data['Load'])
         temperature = np.array(data['Temperature'])
@@ -1212,21 +1206,19 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
 
         print(hot_common_ratio)
         print(i)
-        #guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
-        #guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
     target_regions.plot(ax=ax, color=colors,
                         edgecolor='white',
                         linewidth=1.5,
                         alpha=0.7)
 
-    # 突出显示 Delhi 位置（使用点标记）
-    delhi_coords = (77.1025, 28.7041)  # Delhi 的经纬度
+    # Highlight Delhi location (using a dot marker)
+    delhi_coords = (77.1025, 28.7041)  # Latitude and longitude of Delhi
     ax.scatter(delhi_coords[0], delhi_coords[1], color='red', s=200, zorder=5,
                marker='*', edgecolor='darkred', linewidth=2)
 
-    # 添加标注
+    # add markers
     ax.annotate('Delhi', xy=delhi_coords, xytext=(77.5, 29.0),
                 fontsize=12, fontweight='bold',
                 arrowprops=dict(arrowstyle='->', color='red', lw=1.5),
@@ -1236,16 +1228,16 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset_zoom = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.65, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.65, 0.65, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
     delhi_region = states[states['name'].str.contains('Delhi', na=False)]
     delhi_region.plot(ax=ax_inset_zoom, color=colors[1], alpha=0.8, edgecolor=colors[1], linewidth=2)
     ax_inset_zoom.set_title('Delhi (Enlarged)', fontsize=titlesize-2)
-    ax_inset_zoom.set_xticks([77.125])  # 东经
-    ax_inset_zoom.set_yticks([28.5, 28.75])  # 北纬
+    ax_inset_zoom.set_xticks([77.125])  # East
+    ax_inset_zoom.set_yticks([28.5, 28.75])  # North
     ax_inset_zoom.set_xticklabels(['77.125°E'])
     ax_inset_zoom.set_yticklabels(['28.5°N', '28.75°N'])
     ax_inset_zoom.set_box_aspect(0.6)
@@ -1256,9 +1248,9 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right", 
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2), 
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
@@ -1271,9 +1263,9 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
@@ -6119,6 +6111,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
