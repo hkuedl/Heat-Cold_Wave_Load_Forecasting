@@ -1,4 +1,0 @@
-负荷单位为MW，取的是realtime_demand
-温度单位换算为摄氏度，取的是dry_bulb
-iso_full_data为从2011/1/1-2024/8/31的总表
-时间为calendar_time
