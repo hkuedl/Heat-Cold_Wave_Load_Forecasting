@@ -19,15 +19,12 @@ def clear_diff_data(country='Belgium'):
     end_date = pd.to_datetime('2017/12/31/23')
     data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
 
-    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
-
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
+    
     load = np.array(data['Load'])
     load = (load-min(load))/(max(load)-min(load))
     temperature = np.array(data['Temperature'])
     temperature = (temperature-min(temperature))/(max(temperature)-min(temperature))
-    weekday = np.array(data['Is_Weekend'].astype(float))
 
 
     # define the hot wave and cold wave day
@@ -84,14 +81,12 @@ def diff_dataloader(country='Belgium'):
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
     x_data = x_data.view(x_data.shape[0], x_data.shape[1]//24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
     x_data.requires_grad = True
-    #y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
+
 
     y_data = torch.tensor(labels).type(typ)
 
-    #X_train, X_val, y_train, y_val = train_test_split(x_data, y_data, test_size=0.1, random_state=42)
     train_dataset = torch.utils.data.TensorDataset(x_data.to(device), y_data.to(device))
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     #print(x_data.shape)
     return train_loader
+
