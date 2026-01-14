@@ -64,7 +64,7 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     cmap = plt.get_cmap('GnBu')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
+    sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
@@ -6121,5 +6121,6 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
