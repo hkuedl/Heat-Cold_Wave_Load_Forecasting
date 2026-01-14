@@ -291,9 +291,8 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
 
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
-        # data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-        # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+        data['Date'] = pd.to_datetime(data['Date'])  # ensure Data_Hour is datetime type
+       
         load = np.array(data['load'])
         temperature = np.array(data['temp'])
 
@@ -6121,6 +6120,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
