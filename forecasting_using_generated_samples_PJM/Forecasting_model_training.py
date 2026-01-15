@@ -39,17 +39,17 @@ def data_scaler(country='Belgium', strat_time = '2021/03/28/00', end_time = '202
     data = pd.read_csv('../Data/reformed_data_updated/PJM_reformed_data/{}.csv'.format(country), header=0, usecols=['Date_Hour', 'Load', 'Temperature'])
 
     def replace_hour(date_hour_str):
-        parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-        hour = int(parts[-1])  # 获取小时部分并转换为整数
+        parts = date_hour_str.rsplit('/', 1)  
+        hour = int(parts[-1])  
 
-        # 如果小时在 1 到 24 之间，递减小时
+        # Consider the time difference between daylight saving time and standard time
         if 1 <= hour <= 24:
-            new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-            return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+            new_hour = (hour - 1) if hour != 1 else 0  
+            return parts[0] + f'/{new_hour:02d}'  
         if hour == 25:
             new_hour = 23
             return parts[0] + f'/{new_hour:02d}'
-        return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+        return date_hour_str  
 
     data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -57,16 +57,13 @@ def data_scaler(country='Belgium', strat_time = '2021/03/28/00', end_time = '202
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Date_Hour']) >= start_date) & (pd.to_datetime(data['Date_Hour']) <= end_date)]
 
-    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    #data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # ensure Data_Hour is datetime type
     load = np.array(data['Load'])
     temperature = np.array(data['Temperature'])
 
-    # 过滤掉load中的零值
+    # filter zeros
     load_nonzero = load[load != 0]
 
-    # 如果过滤后数组不为空，使用非零值的最小值；否则使用0或其他默认值
     load_min = load_nonzero.min() if len(load_nonzero) > 0 else 0
 
     return max(load), load_min, max(temperature), min(temperature)
@@ -87,22 +84,20 @@ def clear_diff_data(country='Belgium', strat_time = '2021/03/28/00', end_time = 
         date1 = strat_time
         date2 = '2023/07/01'
         datetime1 = datetime.strptime(date1, '%Y/%m/%d/%H')
-        # 第二个日期没有时间，默认为00:00
         datetime2 = datetime.strptime(date2, '%Y/%m/%d')
         days_difference = abs((datetime2 - datetime1).days)
 
     def replace_hour(date_hour_str):
-        parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-        hour = int(parts[-1])  # 获取小时部分并转换为整数
+        parts = date_hour_str.rsplit('/', 1)  
+        hour = int(parts[-1])  
 
-        # 如果小时在 1 到 24 之间，递减小时
         if 1 <= hour <= 24:
-            new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-            return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+            new_hour = (hour - 1) if hour != 1 else 0  
+            return parts[0] + f'/{new_hour:02d}'  
         if hour == 25:
             new_hour = 23
             return parts[0] + f'/{new_hour:02d}'
-        return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+        return date_hour_str  
 
     data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -111,9 +106,8 @@ def clear_diff_data(country='Belgium', strat_time = '2021/03/28/00', end_time = 
     data = data[(pd.to_datetime(data['Date_Hour']) >= start_date) & (pd.to_datetime(data['Date_Hour']) <= end_date)]
 
 
-    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    #data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    data['Date_Hour'] = pd.to_datetime(data['Date_Hour'])  # ensure Data_Hour is datetime type
+   
 
     maxload, minload, maxtem, mintem = data_scaler(country)
 
@@ -144,8 +138,7 @@ def clear_diff_data(country='Belgium', strat_time = '2021/03/28/00', end_time = 
         if load[24 * i:24 * (i + 8)].min() <= 1e-7:
             #print('exit')
             continue
-        #if days_difference+38 >= i >= days_difference:
-        #    continue
+
 
         load_slice_list.append((load[24 * i:24 * (i + 8)]-minload)/(maxload-minload))
         tem_slice_list.append(temperature[24 * i:24 * (i + 8)])
@@ -185,17 +178,10 @@ def train_dataloader(country='Belgium'):
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [0, 0, 1])
 
-    # print(torch.tensor(load_slice_list)[..., None].shape)
     x_data = torch.cat((torch.tensor(load_slice_list)[..., None],
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
-    #print(x_data[0])
     x_data = x_data.view(x_data.shape[0], x_data.shape[1] // 24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
-    #print(x_data[0])
     x_data = x_data[:, :, :7, :]
-    #x_data.requires_grad = True
-    # y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
 
     y_data = torch.tensor(labels).type(typ)
 
@@ -204,7 +190,7 @@ def train_dataloader(country='Belgium'):
     train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
     val_dataset = torch.utils.data.TensorDataset(x_val.to(device), y_val.to(device))
     val_loader = DataLoader(val_dataset, batch_size=128, shuffle=True)
-    # print(x_data.shape)
+
     return train_loader, val_loader
 
 
@@ -289,10 +275,6 @@ def train_dataloader_conditional(country='Belgium', coldwave_samples=None):
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
     x_data = x_data.view(x_data.shape[0], x_data.shape[1] // 24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
     x_data = x_data[:, :, :7, :]
-    # x_data.requires_grad = True
-    # y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
 
     y_data = torch.tensor(labels).type(typ)
 
@@ -301,7 +283,7 @@ def train_dataloader_conditional(country='Belgium', coldwave_samples=None):
     train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
     val_dataset = torch.utils.data.TensorDataset(x_val.to(device), y_val.to(device))
     val_loader = DataLoader(val_dataset, batch_size=128, shuffle=True)
-    # print(x_data.shape)
+
     return train_loader, val_loader
 
 
@@ -324,7 +306,6 @@ def test_dataloader(country='Belgium', strat_time = '2023/05/01/00', end_time = 
         if coldwave_index[i] == 1:
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [1, 0, 0])
-            # print(1)
         elif hotwave_index[i] == 1:
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [0, 1, 0])
@@ -332,22 +313,18 @@ def test_dataloader(country='Belgium', strat_time = '2023/05/01/00', end_time = 
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [0, 0, 1])
 
-    # print(torch.tensor(load_slice_list)[..., None].shape)
+
     x_data = torch.cat((torch.tensor(load_slice_list)[..., None],
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
     x_data = x_data.view(x_data.shape[0], x_data.shape[1] // 24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
     x_data = x_data[:, :, :7, :]
-    #x_data.requires_grad = True
-    # y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
+
 
     y_data = torch.tensor(labels).type(typ)
 
-    # X_train, X_val, y_train, y_val = train_test_split(x_data, y_data, test_size=0.1, random_state=42)
     test_dataset = torch.utils.data.TensorDataset(x_data.to(device), y_data.to(device))
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-    # print(x_data.shape)
+
     return test_loader
 
 
@@ -371,8 +348,7 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
       model = LSTM_model(input_dim=2, output_dim=24).to(device)
     if model_type == 'CNN':
       model = CNN_Model().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
+
 
     lr = 1e-3
     if data_aug == 0:
@@ -380,10 +356,7 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country, coldwave_samples=coldwave_samples)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
     test_loader = test_dataloader(country=country)
     test_loss_list = []
@@ -402,15 +375,9 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -425,8 +392,6 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
                 x = x.to(device)
                 y = model(x, label[:, 24:48])
                 loss = (loss_fn(y, label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -496,10 +461,7 @@ def training_process_nbeats(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -518,13 +480,8 @@ def training_process_nbeats(country='Belgium', data_aug=0):
         for x, label in train_loader:
             #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -577,8 +534,6 @@ def training_process_impactnet(country='Belgium', data_aug=0):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
     model = impactnet().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
 
     lr = 1e-3
     if data_aug == 0:
@@ -586,10 +541,7 @@ def training_process_impactnet(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -606,15 +558,9 @@ def training_process_impactnet(country='Belgium', data_aug=0):
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -641,8 +587,6 @@ def training_process_impactnet(country='Belgium', data_aug=0):
         else:
             count += 1
             if count >= 150:
-                #print(f"Early stopping at epoch {epoch+1}")
-                #print(best_val_loss)
                 break
 
 
@@ -676,10 +620,7 @@ def training_process_informer(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -696,15 +637,9 @@ def training_process_informer(country='Belgium', data_aug=0):
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(torch.unsqueeze(label[:, 24:48], dim=-1).shape)
             y = model(x, torch.unsqueeze(label[:, 24:48], dim=-1))
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(torch.squeeze(y), label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -719,8 +654,6 @@ def training_process_informer(country='Belgium', data_aug=0):
                 x = x.to(device)
                 y = model(x, torch.unsqueeze(label[:, 24:48], dim=-1))
                 loss = (loss_fn(torch.squeeze(y), label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -757,8 +690,6 @@ def training_process_autoformer(country='Belgium', data_aug=0):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
     model = Autoformer().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
 
     lr = 1e-3
     if data_aug == 0:
@@ -766,10 +697,7 @@ def training_process_autoformer(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -786,13 +714,8 @@ def training_process_autoformer(country='Belgium', data_aug=0):
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
             #print(loss)
             loss.backward()
@@ -809,8 +732,6 @@ def training_process_autoformer(country='Belgium', data_aug=0):
                 x = x.to(device)
                 y = model(x, label[:, 24:48])
                 loss = (loss_fn(y, label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -870,7 +791,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
     train_loader2, val_loader2 = coldwave_dataloader(country=country, coldwave_samples=coldwave_samples)
     optimizer = Adam(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    # loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
     test_loader = test_dataloader(country=country)
     test_loss_list = []
@@ -908,15 +828,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
                 ex_t, load_s, tem_s, ex_s, \
                 prediction_s, prediction_t = model(x1, label1[:, 24:48], x2, label2[:, 24:48])
 
-            # loss = 1*torch.sqrt(loss_fn(prediction_s, label1[:, :24]))+\
-            #       1*torch.sqrt(loss_fn(prediction_t, label2[:, :24]))+\
-            #       0.1*torch.sqrt(loss_fn(load_s, x1[:, 0].view(x1.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(tem_s, x1[:, 1].view(x1.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(ex_s, label1[:, 24:48]))+\
-            #       0.1*torch.sqrt(loss_fn(load_t, x2[:, 0].view(x2.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(tem_t, x2[:, 1].view(x2.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(ex_t, label2[:, 24:48]))+\
-            #       0.1*mmd(hct, hcs) + 0.1*orthogonal_loss(hct, hpt) + 0.1*orthogonal_loss(hcs, hps)
 
             loss = (
                     1 * (loss_fn(prediction_s, label1[:, :24])) +
@@ -968,8 +879,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
                         0 * orthogonal_loss(hct, hpt) +
                         0 * orthogonal_loss(hcs, hps)
                 )
-                # print(loss)
-                # loss = loss_fn(y, label[:, :24])
                 num_val_samples += x1.size(0)
                 total_val_loss += loss.item() * x1.size(0)
 
@@ -1583,5 +1492,6 @@ for test_country in test_country_list:
         writer.writerow(results_list)  # 写入列表中的所有行
 
     #visualization(test_country, coldwave_samples=None)
+
 
 #visualization('Austria')
