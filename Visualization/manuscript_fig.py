@@ -6016,7 +6016,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     p_5_mae = pd.read_csv(
         'impact of proportion_proposed/{}_1.csv'.format(country),
-        skiprows=1  ）
+        skiprows=1  
     ).iloc[:-1, 1].values
 
 
@@ -6028,7 +6028,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     means = [np.mean(group) for group in data_groups]
 
-）
+
     bars = ax[1].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
     best_index = 4
@@ -6057,6 +6057,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
