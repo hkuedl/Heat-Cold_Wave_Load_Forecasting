@@ -9,7 +9,7 @@ import csv
 import pandas as pd
 from Forecasting_Models import ANN_model, LSTM_model, CNN_Model, \
     Separation_network, mmd, orthogonal_loss, Separation_network_LSTM, \
-    Separation_network_CNN, NBEATS, impactnet
+    Separation_network_CNN, NBEATS, impactnet, ConvLSTM
 from Informer.informer_model import Informer
 from Autoformer.autoformer_model import Autoformer
 from torch import Tensor
@@ -41,8 +41,9 @@ def data_scaler(country='Belgium', strat_time = '2015/01/01/00', end_time = '201
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
 
-    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  #ensure Data_Hour is datetime type
-   
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
+    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
     load = np.array(data['Load'])
     temperature = np.array(data['Temperature'])
 
@@ -56,8 +57,9 @@ def clear_diff_data(country='Belgium', strat_time = '2015/01/01/00', end_time = 
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
 
-    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
-   
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
+    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
 
     maxload, minload, maxtem, mintem = data_scaler(country)
 
@@ -114,7 +116,6 @@ def train_dataloader(country='Belgium'):
         if coldwave_index[i] == 1:
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [1, 0, 0])
-            # print(1)
         elif hotwave_index[i] == 1:
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [0, 1, 0])
@@ -122,18 +123,11 @@ def train_dataloader(country='Belgium'):
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [0, 0, 1])
 
-    # print(torch.tensor(load_slice_list)[..., None].shape)
+
     x_data = torch.cat((torch.tensor(load_slice_list)[..., None],
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
-    #print(x_data[0])
     x_data = x_data.view(x_data.shape[0], x_data.shape[1] // 24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
-    #print(x_data[0])
     x_data = x_data[:, :, :7, :]
-    #x_data.requires_grad = True
-    # y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
-
     y_data = torch.tensor(labels).type(typ)
 
     x_train, x_val, y_train, y_val = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
@@ -156,7 +150,6 @@ def coldwave_dataloader(country='Belgium', coldwave_samples=None):
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(seed)
 
-    #coldwave_samples = generate_coldwave_samples(country, num_samples=1200).cpu().detach().numpy()
 
     labels, load_slice_list, tem_slice_list = [], [], []
     ## put generated coldwave samples into the dataloader
@@ -193,9 +186,6 @@ def train_dataloader_conditional(country='Belgium', coldwave_samples=None):
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(seed)
 
-    #coldwave_samples = generate_coldwave_samples(country, num_samples=1200).cpu().detach().numpy()
-    #hotwave_samples = generate_hotwave_samples(country).cpu().detach().numpy()
-
 
 
     load_slice_list, tem_slice_list, weekday_index_list, \
@@ -227,11 +217,6 @@ def train_dataloader_conditional(country='Belgium', coldwave_samples=None):
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
     x_data = x_data.view(x_data.shape[0], x_data.shape[1] // 24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
     x_data = x_data[:, :, :7, :]
-    # x_data.requires_grad = True
-    # y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
-
     y_data = torch.tensor(labels).type(typ)
 
     x_train, x_val, y_train, y_val = train_test_split(x_data, y_data, test_size=0.2, random_state=42)
@@ -262,7 +247,6 @@ def test_dataloader(country='Belgium'):
         if coldwave_index[i] == 1:
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [1, 0, 0])
-            # print(1)
         elif hotwave_index[i] == 1:
             labels.append(load_slice_list[i][-24:].tolist() + tem_slice_list[i][-24:].tolist() +
                           [0, 1, 0])
@@ -275,11 +259,6 @@ def test_dataloader(country='Belgium'):
                         torch.tensor(tem_slice_list)[..., None]), dim=2).type(typ)
     x_data = x_data.view(x_data.shape[0], x_data.shape[1] // 24, 24, x_data.shape[2]).permute(0, 3, 1, 2)
     x_data = x_data[:, :, :7, :]
-    #x_data.requires_grad = True
-    # y_data = torch.cat((torch.tensor(weekday_index_list)[..., None, None],
-    #                    torch.tensor(coldwave_index)[..., None, None],
-    #                    torch.tensor(hotwave_index)[..., None, None]), dim=2).type(typ)
-
     y_data = torch.tensor(labels).type(typ)
 
     # X_train, X_val, y_train, y_val = train_test_split(x_data, y_data, test_size=0.1, random_state=42)
@@ -309,23 +288,17 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
       model = LSTM_model(input_dim=2, output_dim=24).to(device)
     if model_type == 'CNN':
       model = CNN_Model().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
+
 
     lr = 1e-3
     if data_aug == 0:
         train_loader, val_loader = train_dataloader(country=country)
-        #ratio = 'None'
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country, coldwave_samples=coldwave_samples)
-        #ratio = proportion
     test_loader = test_dataloader(country=country)
     test_loss_list = []
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -345,13 +318,8 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
         for x, label in train_loader:
             #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -366,8 +334,6 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
                 x = x.to(device)
                 y = model(x, label[:, 24:48])
                 loss = torch.sqrt(loss_fn(y, label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -399,8 +365,6 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
         else:
             count += 1
             if count >= 150:
-                #print(f"Early stopping at epoch {epoch+1}")
-                #print(best_val_loss)
                 break
 
 
@@ -429,8 +393,6 @@ def training_process_nbeats(country='Belgium', data_aug=0):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
     model = NBEATS().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
 
     lr = 1e-3
     if data_aug == 0:
@@ -438,10 +400,7 @@ def training_process_nbeats(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -458,15 +417,9 @@ def training_process_nbeats(country='Belgium', data_aug=0):
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -481,8 +434,6 @@ def training_process_nbeats(country='Belgium', data_aug=0):
                 x = x.to(device)
                 y = model(x, label[:, 24:48])
                 loss = torch.sqrt(loss_fn(y, label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -493,8 +444,6 @@ def training_process_nbeats(country='Belgium', data_aug=0):
         else:
             count += 1
             if count >= 100:
-                #print(f"Early stopping at epoch {epoch+1}")
-                #print(best_val_loss)
                 break
 
 
@@ -519,8 +468,6 @@ def training_process_impactnet(country='Belgium', data_aug=0):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
     model = impactnet().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
 
     lr = 1e-3
     if data_aug == 0:
@@ -528,10 +475,7 @@ def training_process_impactnet(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -548,15 +492,9 @@ def training_process_impactnet(country='Belgium', data_aug=0):
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -571,8 +509,6 @@ def training_process_impactnet(country='Belgium', data_aug=0):
                 x = x.to(device)
                 y = model(x, label[:, 24:48])
                 loss = (loss_fn(y, label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -583,8 +519,6 @@ def training_process_impactnet(country='Belgium', data_aug=0):
         else:
             count += 1
             if count >= 100:
-                #print(f"Early stopping at epoch {epoch+1}")
-                #print(best_val_loss)
                 break
 
 
@@ -610,8 +544,6 @@ def training_process_informer(country='Belgium', data_aug=0):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
     model = Informer().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
 
     lr = 1e-3
     if data_aug == 0:
@@ -619,10 +551,7 @@ def training_process_informer(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -641,13 +570,8 @@ def training_process_informer(country='Belgium', data_aug=0):
         for x, label in train_loader:
             #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(torch.unsqueeze(label[:, 24:48], dim=-1).shape)
             y = model(x, torch.unsqueeze(label[:, 24:48], dim=-1))
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(torch.squeeze(y), label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -662,8 +586,6 @@ def training_process_informer(country='Belgium', data_aug=0):
                 x = x.to(device)
                 y = model(x, torch.unsqueeze(label[:, 24:48], dim=-1))
                 loss = (loss_fn(torch.squeeze(y), label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -674,8 +596,6 @@ def training_process_informer(country='Belgium', data_aug=0):
         else:
             count += 1
             if count >= 100:
-                #print(f"Early stopping at epoch {epoch+1}")
-                #print(best_val_loss)
                 break
 
 
@@ -700,8 +620,6 @@ def training_process_autoformer(country='Belgium', data_aug=0):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
     model = Autoformer().to(device)
-    #for name, param in model.named_parameters():
-    #    print('values: ', param.data)
 
     lr = 1e-3
     if data_aug == 0:
@@ -709,10 +627,7 @@ def training_process_autoformer(country='Belgium', data_aug=0):
     if data_aug == 1:
         train_loader, val_loader = train_dataloader_conditional(country=country)
     optimizer = Adam(model.parameters(), lr=lr)
-    #optimizer = AdamW(model.parameters(), lr=lr)
-    #optimizer = SGD(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    #loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -729,15 +644,9 @@ def training_process_autoformer(country='Belgium', data_aug=0):
         num_val_samples = 0
 
         for x, label in train_loader:
-            #print(x)
             x = x.to(device)
-            #print(x.shape)
-            #print(label.shape)
             y = model(x, label[:, 24:48])
-            #print(y)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
             loss = loss_fn(y, label[:, :24])
-            #print(loss)
             loss.backward()
 
             optimizer.step()
@@ -752,8 +661,6 @@ def training_process_autoformer(country='Belgium', data_aug=0):
                 x = x.to(device)
                 y = model(x, label[:, 24:48])
                 loss = (loss_fn(y, label[:, :24]))
-                #print(loss)
-                #loss = loss_fn(y, label[:, :24])
                 num_val_samples += x.size(0)
                 total_val_loss += loss.item() * x.size(0)
 
@@ -764,8 +671,6 @@ def training_process_autoformer(country='Belgium', data_aug=0):
         else:
             count += 1
             if count >= 100:
-                #print(f"Early stopping at epoch {epoch+1}")
-                #print(best_val_loss)
                 break
 
 
@@ -815,7 +720,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
     test_loss_list = []
     optimizer = Adam(model.parameters(), lr=lr)
     optimizer.zero_grad()
-    # loss_fn = nn.MSELoss()
     loss_fn = nn.L1Loss()
 
     n_epochs = 2000
@@ -845,22 +749,9 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
             x2 = x2[:current_batch_size]
             label2 = label2[:current_batch_size]
 
-            # print(x1.size(0))
-            # print(x2.size(0))
-
             hpt, hps, hct, hcs, load_t, tem_t, \
                 ex_t, load_s, tem_s, ex_s, \
                 prediction_s, prediction_t = model(x1, label1[:, 24:48], x2, label2[:, 24:48])
-
-            # loss = 1*torch.sqrt(loss_fn(prediction_s, label1[:, :24]))+\
-            #       1*torch.sqrt(loss_fn(prediction_t, label2[:, :24]))+\
-            #       0.1*torch.sqrt(loss_fn(load_s, x1[:, 0].view(x1.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(tem_s, x1[:, 1].view(x1.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(ex_s, label1[:, 24:48]))+\
-            #       0.1*torch.sqrt(loss_fn(load_t, x2[:, 0].view(x2.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(tem_t, x2[:, 1].view(x2.shape[0], -1)))+\
-            #       0.1*torch.sqrt(loss_fn(ex_t, label2[:, 24:48]))+\
-            #       0.1*mmd(hct, hcs) + 0.1*orthogonal_loss(hct, hpt) + 0.1*orthogonal_loss(hcs, hps)
 
             loss = (
                     1 * (loss_fn(prediction_s, label1[:, :24])) +
@@ -915,8 +806,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
                         0 * orthogonal_loss(hct, hpt) +
                         0 * orthogonal_loss(hcs, hps)
                 )
-                # print(loss)
-                # loss = loss_fn(y, label[:, :24])
                 num_val_samples += x1.size(0)
                 total_val_loss += loss.item() * x1.size(0)
 
@@ -939,10 +828,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
                 h = model.shared_encoder(x, label[:, 24:48])
                 h_p = model.source_encoder(x, label[:, 24:48])
                 y = model.source_predictor(h, h_p)
-                # y = model.source_predictor(h)
-                # loss = torch.sqrt(loss_fn(y, label[:, :24]))
-                # print(loss)
-                # loss = loss_fn(y, label[:, :24])
                 forecasted_value.append(y[0, :].cpu().detach().numpy())
                 true_value.append(label[0, :24].cpu().detach().numpy())
                 true_tem.append(label[:, 24:48].cpu().detach().numpy())
@@ -959,8 +844,6 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
         else:
             count += 1
             if count >= stopping_epoch:
-                # print(f"Early stopping at epoch {epoch+1}")
-                # print(best_val_loss)
                 break
 
 
@@ -1115,12 +998,6 @@ def results_visualization_nbeats(country='Belgium', data_aug=0, model_type='nbea
     period = 8
     print('MAE: ', MAE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
     print('RMSE: ', RMSE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
-    # plt.plot(forecasted_value[24 * (day):24 * (day+60)], label='forecasted')
-    # plt.plot(true_value[24 * (day):24 * (day+60)], label='true')
-    # plt.plot(true_tem[24 * (day):24 * (day+60)], label='tem')
-    # plt.ylim(0, 1.2)
-    # plt.legend()
-    # plt.show()
     return MAE(forecasted_value[24 * day:24 * (day + period)],
                true_value[24 * day:24 * (day + period)]), \
         RMSE(forecasted_value[24 * day:24 * (day + period)],
@@ -1179,12 +1056,6 @@ def results_visualization_impactnet(country='Belgium', data_aug=0, model_type='i
     period = 8
     print('MAE: ', MAE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
     print('RMSE: ', RMSE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
-    # plt.plot(forecasted_value[24 * (day):24 * (day+60)], label='forecasted')
-    # plt.plot(true_value[24 * (day):24 * (day+60)], label='true')
-    # plt.plot(true_tem[24 * (day):24 * (day+60)], label='tem')
-    # plt.ylim(0, 1.2)
-    # plt.legend()
-    # plt.show()
     return MAE(forecasted_value[24 * day:24 * (day + period)],
                true_value[24 * day:24 * (day + period)]), \
         RMSE(forecasted_value[24 * day:24 * (day + period)],
@@ -1244,12 +1115,6 @@ def results_visualization_informer(country='Belgium', data_aug=0, model_type='in
     period = 8
     print('MAE: ', MAE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
     print('RMSE: ', RMSE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
-    # plt.plot(forecasted_value[24 * (day):24 * (day+60)], label='forecasted')
-    # plt.plot(true_value[24 * (day):24 * (day+60)], label='true')
-    # plt.plot(true_tem[24 * (day):24 * (day+60)], label='tem')
-    # plt.ylim(0, 1.2)
-    # plt.legend()
-    # plt.show()
     return MAE(forecasted_value[24 * day:24 * (day + period)],
                true_value[24 * day:24 * (day + period)]), \
         RMSE(forecasted_value[24 * day:24 * (day + period)],
@@ -1309,12 +1174,6 @@ def results_visualization_autoformer(country='Belgium', data_aug=0, model_type='
     print('MAE: ', MAE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
     print('RMSE: ', RMSE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
 
-    # plt.plot(forecasted_value[24 * (day):24 * (day+60)], label='forecasted')
-    # plt.plot(true_value[24 * (day):24 * (day+60)], label='true')
-    # plt.plot(true_tem[24 * (day):24 * (day+60)], label='tem')
-    # plt.ylim(0, 1.2)
-    # plt.legend()
-    # plt.show()
     return MAE(forecasted_value[24 * day:24 * (day + period)],
                true_value[24 * day:24 * (day + period)]), \
         RMSE(forecasted_value[24 * day:24 * (day + period)],
@@ -1347,10 +1206,6 @@ def results_visualization_dsn(country='Belgium', model_type='ANN', coldwave_samp
             h = model.shared_encoder(x, label[:, 24:48])
             h_p = model.source_encoder(x, label[:, 24:48])
             y = model.source_predictor(h, h_p)
-            #y = model.source_predictor(h)
-            #loss = torch.sqrt(loss_fn(y, label[:, :24]))
-            # print(loss)
-            # loss = loss_fn(y, label[:, :24])
             forecasted_value.append(y[0, :].cpu().detach().numpy())
             true_value.append(label[0, :24].cpu().detach().numpy())
             true_tem.append(label[:, 24:48].cpu().detach().numpy())
@@ -1390,15 +1245,15 @@ def results_visualization_dsn(country='Belgium', model_type='ANN', coldwave_samp
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 3))
 
-    ax.spines['top'].set_visible(False)  # 上边框
-    ax.spines['right'].set_visible(False)  # 右边框
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
 
     ax.plot(forecasted_value[24 * (day):24 * (day+14)], label='forecasted')
     ax.plot(true_value[24 * (day):24 * (day+14)], label='true')
 
-    ax.fill_between([i+24 for i in range(140)],  # x值范围
-                     [0 for i in range(140)],  # 下边界（曲线本身）
-                     [1.2 for i in range(140)],  # 上边界（比曲线最高点高2个单位）
+    ax.fill_between([i+24 for i in range(140)],
+                     [0 for i in range(140)],
+                     [1.2 for i in range(140)],
                      color='blue',
                      alpha=0.1)
 
@@ -1517,8 +1372,6 @@ for test_country in test_country_list:
 
     with open(filename, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(results_list) 
-
+        writer.writerow(results_list)  # 写入列表中的所有行
 
 #visualization('Austria')
-
