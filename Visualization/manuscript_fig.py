@@ -2898,7 +2898,7 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
         g.ax_joint.set_ylabel("Norm. Temp.", fontsize=labelsize)  
         g.ax_marg_y.set_xlabel('Density', fontsize=labelsize) 
 
-        plt.locator_params(axis='both', nbins=5)  # 每轴最多显示4个刻度
+        plt.locator_params(axis='both', nbins=5)  
         plt.tight_layout()
         plt.show()
 
@@ -2935,7 +2935,7 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
               'skyblue', 'skyblue']
     labels = ['ESDF', '0%', '10%',
               '25%', '50%', '75%',
-              '100%']  # 您可以自定义标签
+              '100%']  
     #region_list = ['欧洲', '广东', '德州', 'PJM', '湖南', '印度']
     region_name = ['GD', 'PJM', 'Texas', 'India', 'Europe', 'HN']
     model_list = ['MLP', 'LSTM', 'CNN']
@@ -2945,8 +2945,8 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
     fig, ax = plt.subplots(1, 2, figsize=(7, 4))
 
     plt.subplots_adjust(
-        wspace=0.5,  # 列间距（宽度比例）
-        hspace=0.4  # 行间距（高度比例）
+        wspace=0.5,  
+        hspace=0.4 
     )
 
     proposed_scatter = [[] for i in range(len(ratio_list))]
@@ -2971,13 +2971,13 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
 
 
     proposed_scatter = np.array(proposed_scatter)
-    # 计算平均值和95%置信区间
+
     means = np.mean(proposed_scatter, axis=1)
     stds = np.std(proposed_scatter, axis=1, ddof=1)
     n = proposed_scatter.shape[1]
 
-    # 计算t分布的临界值（95%置信水平）
-    t_value = stats.t.ppf(0.95, n - 1)  # 双尾检验
+
+    t_value = stats.t.ppf(0.95, n - 1)  
     confidence_intervals = t_value * stds / np.sqrt(n)
 
     print(proposed_scatter)
@@ -2990,8 +2990,8 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
 
     for i, bar in enumerate(bars):
         height = bar.get_height()
-        # 在柱子底部内部添加标签
-        ax[0].text(bar.get_x() + bar.get_width() / 2., height * 0.1,  # 高度为柱子的10%位置
+
+        ax[0].text(bar.get_x() + bar.get_width() / 2., height * 0.1,  
                  labels[i], ha='center', va='bottom', rotation=90,
                  fontsize=10, fontweight='bold', color='black')
 
@@ -3027,13 +3027,13 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
 
     proposed_scatter = np.array(proposed_scatter)
 
-    # 计算平均值和95%置信区间
+
     means = np.mean(proposed_scatter, axis=1)
     stds = np.std(proposed_scatter, axis=1, ddof=1)
     n = proposed_scatter.shape[1]
 
-    # 计算t分布的临界值（95%置信水平）
-    t_value = stats.t.ppf(0.95, n - 1)  # 双尾检验
+
+    t_value = stats.t.ppf(0.95, n - 1)  
     confidence_intervals = t_value * stds / np.sqrt(n)
 
     bars = ax[1].bar(range(1, len(ratio_list)+1), means, color=colors,
@@ -3041,8 +3041,8 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
               capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
     for i, bar in enumerate(bars):
         height = bar.get_height()
-        # 在柱子底部内部添加标签
-        ax[1].text(bar.get_x() + bar.get_width() / 2., height * 0.1,  # 高度为柱子的10%位置
+
+        ax[1].text(bar.get_x() + bar.get_width() / 2., height * 0.1, 
                  labels[i], ha='center', va='bottom', rotation=90,
                  fontsize=10, fontweight='bold', color='black')
     #ax[1].set_xlim(0, 0.1)
@@ -3088,8 +3088,8 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     fig, ax = plt.subplots(1, 2, figsize=(7, 4))
 
     plt.subplots_adjust(
-        wspace=0.5,  # 列间距（宽度比例）
-        hspace=0.4  # 行间距（高度比例）
+        wspace=0.5,  
+        hspace=0.4 
     )
 
     proposed_scatter = []
@@ -3187,8 +3187,8 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     ax[1].spines['right'].set_visible(False)
 
     ax[0].legend(loc='upper center',
-               bbox_to_anchor=(0.7, 0.3),  # 调整垂直位置
-               ncol=1,  # 设置列数以水平排列
+               bbox_to_anchor=(0.7, 0.3),  
+               ncol=1,  
                fontsize=ticksize,
                frameon=False)
 
@@ -3291,8 +3291,8 @@ def plot_separation_curve(titlesize=16, ticksize=16, labelsize=16, weather_type=
     #bars = plt.bar(range(1, len(ratio_list)+1), means, color='skyblue', edgecolor='black', alpha=0.7)
 
     ax.legend(loc='upper center',
-               bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
-               ncol=2,  # 设置列数以水平排列
+               bbox_to_anchor=(0.75, 0.3),  
+               ncol=2,  
                fontsize=ticksize,
                frameon=True,
                edgecolor='black',
@@ -3368,18 +3368,17 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
 
     fig, ax = plt.subplots(1, 1, figsize=(10.5, 5))
 
-    # 对于 basic 数据
+
     flatten_basic = [item for sublist in convergence_lists_basic for item in sublist]
-    # 先过滤掉长度小于300的列表
     filtered_basic_lists = [sublist for sublist in flatten_basic if len(sublist) >= 300]
-    # 再统一截取到最小长度
+    # Unify and trim to the minimum length
     if filtered_basic_lists:
         min_length_basic = min(len(sublist) for sublist in filtered_basic_lists)
         trimmed_basic_lists = [sublist[:min_length_basic] for sublist in filtered_basic_lists]
     else:
         trimmed_basic_lists = []
 
-    # 对于 rd 数据
+
     flatten_rd = [item for sublist in convergence_lists_rd for item in sublist]
     filtered_rd_lists = [sublist for sublist in flatten_rd if len(sublist) >= 300]
     if filtered_rd_lists:
@@ -3388,7 +3387,7 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
     else:
         trimmed_rd_lists = []
 
-    # 对于 proposed 数据
+
     flatten_proposed = [item for sublist in convergence_lists_proposed for item in sublist]
     filtered_proposed_lists = [sublist for sublist in flatten_proposed if len(sublist) >= 300]
     if filtered_proposed_lists:
@@ -3424,8 +3423,8 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
     ax.yaxis.set_tick_params(labelsize=ticksize)
 
     plt.legend(loc='upper center',
-               bbox_to_anchor=(0.4, 1),  # 调整垂直位置
-               ncol=3,  # 设置列数以水平排列
+               bbox_to_anchor=(0.4, 1),  
+               ncol=3,  
                fontsize=ticksize,
                frameon=False)
 
@@ -3556,18 +3555,17 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
 
     fig, ax = plt.subplots(1, 1, figsize=(10.5, 5))
 
-    # 对于 basic 数据
+
     flatten_basic = [item for sublist in convergence_lists_basic for item in sublist]
-    # 先过滤掉长度小于300的列表
     filtered_basic_lists = [sublist for sublist in flatten_basic if len(sublist) >= 300]
-    # 再统一截取到最小长度
+
     if filtered_basic_lists:
         min_length_basic = min(len(sublist) for sublist in filtered_basic_lists)
         trimmed_basic_lists = [sublist[:min_length_basic] for sublist in filtered_basic_lists]
     else:
         trimmed_basic_lists = []
 
-    # 对于 rd 数据
+
     flatten_rd = [item for sublist in convergence_lists_rd for item in sublist]
     filtered_rd_lists = [sublist for sublist in flatten_rd if len(sublist) >= 300]
     if filtered_rd_lists:
@@ -3576,7 +3574,7 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
     else:
         trimmed_rd_lists = []
 
-    # 对于 proposed 数据
+
     flatten_proposed = [item for sublist in convergence_lists_proposed for item in sublist]
     filtered_proposed_lists = [sublist for sublist in flatten_proposed if len(sublist) >= 300]
     if filtered_proposed_lists:
@@ -3611,8 +3609,8 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
     ax.yaxis.set_tick_params(labelsize=ticksize)
 
     plt.legend(loc='upper center',
-               bbox_to_anchor=(0.4, 1),  # 调整垂直位置
-               ncol=3,  # 设置列数以水平排列
+               bbox_to_anchor=(0.4, 1),  
+               ncol=3,  
                fontsize=ticksize,
                frameon=False)
 
@@ -3720,8 +3718,8 @@ def plot_scalability_bar(titlesize=12, ticksize=12, labelsize=12, weather_type='
     ax = ax.flatten()
 
     plt.subplots_adjust(
-        wspace=0.5,  # 列间距（宽度比例）
-        hspace=0.4  # 行间距（高度比例）
+        wspace=0.5,  
+        hspace=0.4  
     )
 
 
@@ -3764,11 +3762,11 @@ def plot_scalability_bar(titlesize=12, ticksize=12, labelsize=12, weather_type='
         da_means = [np.mean(sublist) for sublist in da_scatter]
         proposed_means = [np.mean(sublist) for sublist in proposed_scatter]
 
-        x = np.arange(3)  # 3个组的位置：0, 1, 2
-        width = 0.25  # 柱子的宽度
+        x = np.arange(3)  
+        width = 0.25  
 
         for j in range(3):
-            # 绘制每组的三根柱子
+
             ax[i].bar(x - width, [common_means[j]], width, label='Common', color='blue')
             ax[i].bar(x, [da_means[j]], width, label='DA', color='orange')
             ax[i].bar(x + width, [proposed_means[j]], width, label='Proposed', color='green')
@@ -4015,17 +4013,16 @@ def save_extreme_ramping_rate():
                            usecols=['Date_Hour', 'Load', 'Temperature'])
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-            hour = int(parts[-1])  # 获取小时部分并转换为整数
+            parts = date_hour_str.rsplit('/', 1)  
+            hour = int(parts[-1])  
 
-            # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+                new_hour = (hour - 1) if hour != 1 else 0  
+                return parts[0] + f'/{new_hour:02d}'  
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+            return date_hour_str  
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -4097,7 +4094,7 @@ def save_extreme_ramping_rate():
         end_date = pd.to_datetime('2023/09/30/23')
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
+        data['Date'] = pd.to_datetime(data['Date'])  
 
         load = np.array(data['load'])
         load = (load - min(load)) / (max(load) - min(load))
@@ -4141,7 +4138,7 @@ def save_extreme_ramping_rate():
     data = {
         'Group': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
-                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),   # 三个组
+                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),   
         'Value': EU_common_rr+GD_common_rr+ID_common_rr+texas_common_rr+PJM_common_rr+
                  HN_common_rr,
         'HUE': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
@@ -4153,7 +4150,7 @@ def save_extreme_ramping_rate():
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
                  ['India'] * len(ID_heatwave_rr) + ['Texas'] * len(texas_heatwave_rr) +
-                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  # 三个组
+                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr), 
         'Value': EU_coldwave_rr + GD_heatwave_rr + ID_heatwave_rr + texas_heatwave_rr + PJM_heatwave_rr +
                  HN_coldwave_rr,
         'HUE': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4388,17 +4385,16 @@ def save_extreme_values():
                            usecols=['Date_Hour', 'Load', 'Temperature'])
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-            hour = int(parts[-1])  # 获取小时部分并转换为整数
+            parts = date_hour_str.rsplit('/', 1)  
+            hour = int(parts[-1])  
 
-            # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+                new_hour = (hour - 1) if hour != 1 else 0  
+                return parts[0] + f'/{new_hour:02d}'  
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+            return date_hour_str  
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -4468,7 +4464,7 @@ def save_extreme_values():
         end_date = pd.to_datetime('2023/09/30/23')
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
+        data['Date'] = pd.to_datetime(data['Date'])  
 
         load = np.array(data['load'])
         load = (load - min(load)) / (max(load) - min(load))
@@ -4522,7 +4518,7 @@ def save_extreme_values():
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
                  ['India'] * len(ID_heatwave_rr) + ['Texas'] * len(texas_heatwave_rr) +
-                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  # 三个组
+                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  
         'Value': EU_coldwave_rr + GD_heatwave_rr + ID_heatwave_rr + texas_heatwave_rr + PJM_heatwave_rr +
                  HN_coldwave_rr,
         'HUE': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4769,17 +4765,17 @@ def save_extreme_energy():
                            usecols=['Date_Hour', 'Load', 'Temperature'])
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-            hour = int(parts[-1])  # 获取小时部分并转换为整数
+            parts = date_hour_str.rsplit('/', 1)  
+            hour = int(parts[-1])  
 
             # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+                new_hour = (hour - 1) if hour != 1 else 0  
+                return parts[0] + f'/{new_hour:02d}' 
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+            return date_hour_str  
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -4851,7 +4847,7 @@ def save_extreme_energy():
         end_date = pd.to_datetime('2023/09/30/23')
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
+        data['Date'] = pd.to_datetime(data['Date'])  
 
         load = np.array(data['load'])
         load = (load - min(load)) / (max(load) - min(load))
@@ -4895,7 +4891,7 @@ def save_extreme_energy():
     data = {
         'Group': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
-                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),   # 三个组
+                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),  
         'Value': EU_common_rr+GD_common_rr+ID_common_rr+texas_common_rr+PJM_common_rr+
                  HN_common_rr,
         'HUE': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
@@ -4907,7 +4903,7 @@ def save_extreme_energy():
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
                  ['India'] * len(ID_heatwave_rr) + ['Texas'] * len(texas_heatwave_rr) +
-                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  # 三个组
+                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  
         'Value': EU_coldwave_rr + GD_heatwave_rr + ID_heatwave_rr + texas_heatwave_rr + PJM_heatwave_rr +
                  HN_coldwave_rr,
         'HUE': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4933,14 +4929,14 @@ def plot_extreme_boxes_2():
     ### ramping_common
     df = pd.read_excel('ramping_common.xlsx')
 
-    # 按 Group 和 HUE 分组数据
+    # Group data by Group and HUE
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
 
-    # 存储 violin 数据
+    # store violin data
     violin_data = []
     positions = []
     colors = []
@@ -4950,50 +4946,50 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  # 只添加非空数据
+            if len(values) > 0:  
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  # 增加间距
+        pos += 1  
 
     #print(violin_data)
 
-    # 绘制 violinplot
+    # violinplot
     violins = ax[0].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  # 显示均值（代替 inner='quartile'）
-        showmedians=False,  # 不显示中位数
-        quantiles=None,  # 不显示分位数
-        widths=0.8,  # 调整宽度
+        showmeans=True,  
+        showmedians=False,  
+        quantiles=None,  
+        widths=0.8,  
     )
 
-    violins['cmeans'].set_color('black')  # 均值线颜色
-    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_color('black')  
+    violins['cmeans'].set_linewidth(1)  
     violins['cmeans'].set_linestyle('-')
 
-    # 设置颜色和样式
+
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(1)  # 透明度
-        pc.set_linestyle('-')  # 线型
-        pc.set_linewidth(0.8)  # 线宽
+        pc.set_alpha(1)  
+        pc.set_linestyle('-')  
+        pc.set_linewidth(0.8)  
 
 
     ######### ramping_extreme
     df = pd.read_excel('ramping_extreme.xlsx')
 
-    # 按 Group 和 HUE 分组数据
+    # Group data by Group and HUE
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
-    # 存储 violin 数据
+
     violin_data = []
     positions = []
     colors = []
@@ -5003,38 +4999,38 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  # 只添加非空数据
+            if len(values) > 0:  
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  # 增加间距
+        pos += 1  
 
     # print(violin_data)
 
-    # 绘制 violinplot
+
     violins = ax[0].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  # 显示均值（代替 inner='quartile'）
-        showmedians=False,  # 不显示中位数
-        quantiles=None,  # 不显示分位数
-        widths=0.8,  # 调整宽度
+        showmeans=True,  
+        showmedians=False,  
+        quantiles=None,  
+        widths=0.8,  
     )
 
-    violins['cmeans'].set_color('black')  # 均值线颜色
-    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_color('black') 
+    violins['cmeans'].set_linewidth(1)  
     violins['cmeans'].set_linestyle('--')
 
-    # 设置颜色和样式
+
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(0.5)  # 透明度
-        pc.set_linestyle('--')  # 线型
-        pc.set_linewidth(0.8)  # 线宽
+        pc.set_alpha(0.5)  
+        pc.set_linestyle('--')  
+        pc.set_linewidth(0.8)  
 
 
 
@@ -5043,13 +5039,12 @@ def plot_extreme_boxes_2():
     ### extreme_values_common
     df = pd.read_excel('extreme_values_common.xlsx')
 
-    # 按 Group 和 HUE 分组数据
+    # Group data by Group and HUE
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
-    # 存储 violin 数据
     violin_data = []
     positions = []
     colors = []
@@ -5059,49 +5054,49 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  # 只添加非空数据
+            if len(values) > 0:  
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  # 增加间距
+        pos += 1  
 
     # print(violin_data)
 
-    # 绘制 violinplot
+
     violins = ax[1].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  # 显示均值（代替 inner='quartile'）
-        showmedians=False,  # 不显示中位数
-        quantiles=None,  # 不显示分位数
-        widths=0.8,  # 调整宽度
+        showmeans=True,  
+        showmedians=False,  
+        quantiles=None,  
+        widths=0.8, 
     )
 
-    violins['cmeans'].set_color('black')  # 均值线颜色
-    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_color('black')  
+    violins['cmeans'].set_linewidth(1)  
     violins['cmeans'].set_linestyle('-')
 
-    # 设置颜色和样式
+
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(1)  # 透明度
-        pc.set_linestyle('-')  # 线型
-        pc.set_linewidth(0.8)  # 线宽
+        pc.set_alpha(1)  
+        pc.set_linestyle('-')  
+        pc.set_linewidth(0.8)  
 
     ######### extreme_values_extreme
     df = pd.read_excel('extreme_values_extreme.xlsx')
 
-    # 按 Group 和 HUE 分组数据
+    # Group data by Group and HUE
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
-    # 存储 violin 数据
+
     violin_data = []
     positions = []
     colors = []
@@ -5111,38 +5106,38 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  # 只添加非空数据
+            if len(values) > 0:  
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  # 增加间距
+        pos += 1  
 
     # print(violin_data)
 
-    # 绘制 violinplot
+
     violins = ax[1].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  # 显示均值（代替 inner='quartile'）
-        showmedians=False,  # 不显示中位数
-        quantiles=None,  # 不显示分位数
-        widths=0.8,  # 调整宽度
+        showmeans=True,  
+        showmedians=False,  
+        quantiles=None,  
+        widths=0.8,  
     )
 
-    violins['cmeans'].set_color('black')  # 均值线颜色
-    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_color('black')  
+    violins['cmeans'].set_linewidth(1)  
     violins['cmeans'].set_linestyle('--')
 
-    # 设置颜色和样式
+
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(0.5)  # 透明度
-        pc.set_linestyle('--')  # 线型
-        pc.set_linewidth(0.8)  # 线宽
+        pc.set_alpha(0.5) 
+        pc.set_linestyle('--')  
+        pc.set_linewidth(0.8)  
 
 
 
@@ -5150,13 +5145,13 @@ def plot_extreme_boxes_2():
     ### energy_common
     df = pd.read_excel('energy_common.xlsx')
 
-    # 按 Group 和 HUE 分组数据
+    # Group data by Group and HUE
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
-    # 存储 violin 数据
+
     violin_data = []
     positions = []
     colors = []
@@ -5166,49 +5161,49 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  # 只添加非空数据
+            if len(values) > 0:  
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  # 增加间距
+        pos += 1  
 
     # print(violin_data)
 
-    # 绘制 violinplot
+
     violins = ax[2].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  # 显示均值（代替 inner='quartile'）
-        showmedians=False,  # 不显示中位数
-        quantiles=None,  # 不显示分位数
-        widths=0.8,  # 调整宽度
+        showmeans=True, 
+        showmedians=False,  
+        quantiles=None,  
+        widths=0.8,  
     )
 
-    violins['cmeans'].set_color('black')  # 均值线颜色
-    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_color('black') 
+    violins['cmeans'].set_linewidth(1)  
     violins['cmeans'].set_linestyle('-')
 
-    # 设置颜色和样式
+
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(1)  # 透明度
-        pc.set_linestyle('-')  # 线型
-        pc.set_linewidth(0.8)  # 线宽
+        pc.set_alpha(1)  
+        pc.set_linestyle('-')  
+        pc.set_linewidth(0.8)  
 
     ######### energy_extreme
     df = pd.read_excel('energy_extreme.xlsx')
 
-    # 按 Group 和 HUE 分组数据
+    # Group data by Group and HUE
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
-    # 存储 violin 数据
+
     violin_data = []
     positions = []
     colors = []
@@ -5218,38 +5213,38 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  # 只添加非空数据
+            if len(values) > 0:  
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  # 增加间距
+        pos += 1  
 
     # print(violin_data)
 
-    # 绘制 violinplot
+
     violins = ax[2].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  # 显示均值（代替 inner='quartile'）
-        showmedians=False,  # 不显示中位数
-        quantiles=None,  # 不显示分位数
-        widths=0.8,  # 调整宽度
+        showmeans=True,  
+        showmedians=False,  
+        quantiles=None,  
+        widths=0.8,  
     )
 
-    violins['cmeans'].set_color('black')  # 均值线颜色
-    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_color('black')  
+    violins['cmeans'].set_linewidth(1)  
     violins['cmeans'].set_linestyle('--')
 
     # 设置颜色和样式
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(0.5)  # 透明度
-        pc.set_linestyle('--')  # 线型
-        pc.set_linewidth(0.8)  # 线宽
+        pc.set_alpha(0.5)  
+        pc.set_linestyle('--') 
+        pc.set_linewidth(0.8)  
 
 
 
@@ -5271,7 +5266,7 @@ def plot_extreme_boxes_2():
 
 
     for i in range(3):
-        ax[i].set_xticks([1, 3, 5, 7, 9, 11])  # 设置刻度位置
+        ax[i].set_xticks([1, 3, 5, 7, 9, 11])  
         ax[i].tick_params(axis='x', which='major', length=0)
         ax[i].set_xticklabels(x_labels)
         ax[i].minorticks_on()
@@ -5384,8 +5379,8 @@ def plot_convergence_curve(titlesize=12, ticksize=12, labelsize=12, zoomx1=60, x
         ax[i].yaxis.set_tick_params(labelsize=ticksize)
 
         ax[i].legend(loc='upper center',
-               bbox_to_anchor=(0.25, 1),  # 调整垂直位置
-               ncol=1,  # 设置列数以水平排列
+               bbox_to_anchor=(0.25, 1),  
+               ncol=1,  
                fontsize=ticksize,
                frameon=False)
 
@@ -5481,8 +5476,7 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
     fig = plt.figure(figsize=(16, 4.5))
 
-    # 定义具体的宽度比例（可以根据需要调整）
-    gs = GridSpec(1, 4, width_ratios=[1.5, 2, 1.5, 2])  # 3:2:3:2的比例
+    gs = GridSpec(1, 4, width_ratios=[1.5, 2, 1.5, 2])  # 3:2:3:2
 
 
 
@@ -5493,21 +5487,20 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
     ## ax1的散点图
-    colors = ['#FFB6C1', '#FF69B4', '#FF1493', '#DC143C', '#1976D2']  # 粉色到红色渐变
-    # 或者使用其他颜色方案：
-    # colors = ['#E3F2FD', '#90CAF9', '#42A5F5', '#1976D2']  # 蓝色渐变
-    # colors = ['#E8F5E8', '#81C784', '#4CAF50', '#2E7D32']  # 绿色渐变
+    colors = ['#FFB6C1', '#FF69B4', '#FF1493', '#DC143C', '#1976D2']  
+    # colors = ['#E3F2FD', '#90CAF9', '#42A5F5', '#1976D2']  
+    # colors = ['#E8F5E8', '#81C784', '#4CAF50', '#2E7D32']  
 
-    # 获取 ratio=0 时的精度作为 x 轴数据
+    # Obtain the precision at ratio=0 as the x-axis data
     x_data = result_list[0, :, :].flatten()  # ratio=0 的所有数据
 
-    # 为每个非零 ratio 创建散点
+
     scatters = []
     for i, ratio in enumerate(['0.1', '0.25', '0.5', '0.75', '1']):
-        ratio_idx = i + 1  # 在 ratio_list 中的索引
-        y_data = result_list[ratio_idx, :, :].flatten()  # 当前 ratio 的所有数据
+        ratio_idx = i + 1  
+        y_data = result_list[ratio_idx, :, :].flatten()  
 
-        # 绘制散点
+
         scatter = ax1.scatter(x_data, y_data,
                               c=colors[i],
                               alpha=0.7,
@@ -5520,7 +5513,7 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
     ax1.set_xlabel('nMAE without Synthetic Samples', fontsize=labelsize)
     ax1.set_ylabel('nMAE with Synthetic Samples', fontsize=labelsize)
 
-    # 添加对角线 (y=x) 作为参考
+
     min_val = min(result_list.min(), result_list.min())
     max_val = max(result_list.max(), result_list.max())
     ax1.plot([min_val, max_val], [min_val, max_val],
@@ -5531,7 +5524,7 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 
-    ## ax2的折线图
+
     avg_MLP = np.mean(result_list[:, :, 0], axis=1)
     max_MLP = np.max(result_list[:, :, 0], axis=1)
     min_MLP = np.min(result_list[:, :, 0], axis=1)
@@ -5563,8 +5556,8 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 
-    handles = scatters + [line1, line2, line3]  # 所有线条的句柄
-    labels = [h.get_label() for h in handles]  # 对应的标签
+    handles = scatters + [line1, line2, line3] 
+    labels = [h.get_label() for h in handles]  
 
     ax2.set_xlabel('Synthetic Samples Penetration Ratio', fontsize=labelsize)
     ax2.set_ylabel('nRMSE', fontsize=labelsize)
@@ -5573,15 +5566,15 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 
-    # ax3的散点图
-    x_data = result_list_rmse[0, :, :].flatten()  # ratio=0 的所有数据
+    # ax3
+    x_data = result_list_rmse[0, :, :].flatten()  
 
-    # 为每个非零 ratio 创建散点
+
     for i, ratio in enumerate(['0.1', '0.25', '0.5', '0.75', '1']):
-        ratio_idx = i + 1  # 在 ratio_list 中的索引
-        y_data = result_list_rmse[ratio_idx, :, :].flatten()  # 当前 ratio 的所有数据
+        ratio_idx = i + 1  
+        y_data = result_list_rmse[ratio_idx, :, :].flatten()  
 
-        # 绘制散点
+
         scatter = ax3.scatter(x_data, y_data,
                               c=colors[i],
                               alpha=0.7,
@@ -5594,13 +5587,13 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
     ax3.set_xlabel('nRMSE without Synthetic Samples', fontsize=labelsize)
     ax3.set_ylabel('nRMSE with Synthetic Samples', fontsize=labelsize)
 
-    # 添加对角线 (y=x) 作为参考
+
     min_val = min(result_list_rmse.min(), result_list_rmse.min())
     max_val = max(result_list_rmse.max(), result_list_rmse.max())
     ax3.plot([min_val, max_val], [min_val, max_val],
              'k--', alpha=0.5, linewidth=1, label='y=x')
 
-    # ax4的折线图
+
     avg_MLP = np.mean(result_list_rmse[:, :, 0], axis=1)
     max_MLP = np.max(result_list_rmse[:, :, 0], axis=1)
     min_MLP = np.min(result_list_rmse[:, :, 0], axis=1)
@@ -5640,8 +5633,8 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
     fig.legend(handles, labels, loc='upper center',
-               bbox_to_anchor=(0.5, 0.93),  # 调整垂直位置
-               ncol=8,  # 设置列数以水平排列
+               bbox_to_anchor=(0.5, 0.93),  
+               ncol=8,  
                fontsize=ticksize,
                frameon=False)
 
@@ -5748,8 +5741,8 @@ def ablation_on_classifier(country='Belgium', titlesize=12, ticksize=12, labelsi
     ax.set_ylim(0, 1.05)
     ax.axvspan(120, 120 + 8 * 24, alpha=0.1, color='lightcoral')
     ax.legend(loc='upper center',
-              bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
-              ncol=1,  # 设置列数以水平排列
+              bbox_to_anchor=(0.75, 0.3),  
+              ncol=1,  
               fontsize=ticksize,
               frameon=True,
               edgecolor='black')
@@ -6064,6 +6057,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
