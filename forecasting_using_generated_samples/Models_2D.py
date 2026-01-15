@@ -201,8 +201,6 @@ class ScoreModel(nn.Module):
 
         h = self.tconv1(torch.cat([h, h1], dim=1))
 
-        # 由于真实 score 的尺度(2-norm)在 1/std 水平,
-        # 因此这里用 1/std 来 rescale 模型输出, 就会鼓励模型的输出具有单位尺度
         std = self.p_0t(x, t)[1]
         h = h / std[:, None, None, None]
 
@@ -226,6 +224,7 @@ class ScoreModel(nn.Module):
 #c.backward(retain_graph=True)
 #print(x.grad)
 #z.backward()
+
 
 
 
