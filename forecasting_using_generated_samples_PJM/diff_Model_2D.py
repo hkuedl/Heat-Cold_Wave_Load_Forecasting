@@ -21,41 +21,40 @@ class SDE(abc.ABC):
     @property
     @abc.abstractmethod
     def T(self) -> int:
-        """ 正向 SDE 的终止时刻, 整个过程时间的流动方向是 0 -> T """
+        """ At the termination time of the forward SDE, the direction of time flow throughout the entire process is 0 → T """
         pass
 
     @abc.abstractmethod
     def sde(self, x: Tensor, t: Tensor) -> Tuple[Tensor, Tensor]:
-        """ 计算漂移和扩散系数: f, g """
+        """ Drift and Diffusion Coefficients: f, g """
         pass
 
     @abc.abstractmethod
     def p_0t(self, x: Tensor, t: Tensor):
-        """ 计算决定条件分布 p(x(t) | x(0)) 的参数，这里计划会返回均值和标准差 """
+        """ return mean and std of p(x(t) | x(0)) """
         pass
 
     def prior_sampling(self, shape) -> Tensor:
-        """ 从先验分布 p_T(x) 中采样(作为采样起点)，先验通常为标准高斯分布 """
+        """ sampling from the prior distribution p_T(x) """
         torch.manual_seed(2)
         np.random.seed(2)
         return torch.randn(*shape)
 
     def discretize(self, x: Tensor, t: Tensor) -> Tuple[Tensor, Tensor]:
-        """ 使用数值方法对 SDE 实施离散化, 返回 $f * \Delta t$, $g * \sqrt{\Delta}t$ """
+        """ discretize and return $f * \Delta t$, $g * \sqrt{\Delta}t$ """
 
-        # 欧拉-丸山法所对应的离散时间间隔
         delta_t = 1. / self.N
         f, g = self.sde(x, t)
 
         return f * delta_t, g * torch.tensor(delta_t).to(t).sqrt()
 
     def reverse(self, score_fn: Union[Module, Callable], type='hotwave'):
-        """ 构造逆向时间的 SDE/ODE, 返回1个代表 reverse-time SDE 的对象 """
+        """ reverse-time SDE """
 
         N = self.N
         T = self.T
 
-        # 用于计算正向 SDE 的漂移和扩散系数的函数
+        # Drift and Diffusion Coefficients of forward process
         fw_sde = self.sde
         fw_discretize = self.discretize
 
@@ -69,7 +68,7 @@ class SDE(abc.ABC):
                 return T
 
             def sde(self, x: Tensor, t: Tensor, discrete: bool = False) -> Tuple[Tensor, Tensor]:
-                # 正向 SDE 的漂移和扩散系数
+
                 f, g = fw_discretize(x, t) if discrete else fw_sde(x, t)
                 #x.requires_grad = True
                 score, classification = score_fn(x, t)
@@ -93,7 +92,7 @@ class SDE(abc.ABC):
                     conditional_pro.backward(retain_graph=True)
                     conditional_gradient = x.grad
 
-                # 根据 reverse-time SDE 公式重新计算漂移系数
+                # Drift and Diffusion Coefficients of reverse-time SDE
                 f = f - g[:, None, None, None] ** 2 * (score+numda*conditional_gradient)
 
                 return f, g
@@ -104,57 +103,46 @@ class SDE(abc.ABC):
 def sde_loss_fn(sde: SDE, score_fn: Union[Module, Callable],
                 data: Tensor, label: Tensor,
                 eps: float = 1e-5) -> Tensor:
-    """ loss 函数, 其中时间变量是连续数值而非离散的时间步 """
+
 
     bs = data.size(0)
 
     T = sde.T
-    # 时间变量从连续的均匀分布中采样
-    # 这里做了特殊处理，使得最小值为 eps 而非 0,
-    # 有助于稳定训练效果
+    # set an eps for stability
+
     t = torch.rand(bs, device=data.device) * (T - eps) + eps
 
-    # 从标准高斯分布中采样噪声
+    # sampling noise from the standard Guassian distribution
     noise = torch.randn_like(data)
     mean, std = sde.p_0t(data, t)
-    # 生成加噪后的数据, 其服从均值为 mean, 标准差为 std 的高斯分布
+    # Generate data with added noise
     perturbed_data = mean + std[:, None, None, None] * noise
 
-    # 模型根据含噪声的数据及当前时间估计出对应的 score
+    # estimate the score
     score, classification = score_fn(perturbed_data, t)
-    # loss 函数化简后的形式, 计算出 loss 后独立在每个样本的所有维度求平均
     loss = ((score * std[:, None, None, None] + noise) ** 2).reshape(bs, -1).mean(dim=1)
     ETL = torch.nn.CrossEntropyLoss()(classification, label)
-    # 最后返回所有样本的 loss 均值
+
     return loss.mean()+ETL
 
 
 def classifier_fn(sde: SDE, classifier: Module, data: Tensor, label: Tensor, eps: float = 1e-5) -> Tensor:
-    """ loss 函数, 其中时间变量是连续数值而非离散的时间步 """
+
 
     bs = data.size(0)
 
     T = sde.T
-    # 时间变量从连续的均匀分布中采样
-    # 这里做了特殊处理，使得最小值为 eps 而非 0,
-    # 有助于稳定训练效果
     t = torch.rand(bs, device=data.device) * (T - eps) + eps
 
-    # 从标准高斯分布中采样噪声
+
     noise = torch.randn_like(data)
     mean, std = sde.p_0t(data, t)
-    # 生成加噪后的数据, 其服从均值为 mean, 标准差为 std 的高斯分布
     perturbed_data = mean + std[:, None, None, None] * noise
 
-    # 模型根据含噪声的数据及当前时间估计出对应的 score
+    # predict the extreme heat or cold wave label
     score = classifier(perturbed_data)
-    #print(score)
-    #score = torch.nn.Softmax()(score)
-    # loss 函数化简后的形式, 计算出 loss 后独立在每个样本的所有维度求平均
     loss = torch.nn.CrossEntropyLoss()(score, label)
-    #print(label)
-    #print(loss)
-    # 最后返回所有样本的 loss 均值
+
     return loss
 
 
@@ -163,26 +151,25 @@ class VESDE(SDE):
     def __init__(self, sigma_min: float = 0.01,sigma_max: float = 50., N: int = 1000):
         super().__init__(N)
 
-        # 最小的 noise scale
+        # minimal noise scale
         self.sigma_min = sigma_min
-        # 最大的 noise scale
+        # maximum noise scale
         self.sigma_max = sigma_max
 
-        # NCSN 的 N 个 noise scales
+        # noise scales
         self.N = N
-        # 幂形成等差数列, 则最终结果就是等比数列
+        # a power sequence forms an arithmetic sequence, the final result is a geometric sequence
         self.discrete_sigmas = torch.exp(
             torch.linspace(np.log(sigma_min), np.log(sigma_max), N)
         )
 
     @property
     def T(self) -> int:
-        # 在由离散的 SMLD 拓展至连续的 VE SDE 后，
-        # 时间的 t 的取值范围为 [0,1]
+        # t  [0,1]
         return 1
 
     def sde(self, x: Tensor, t: Tensor) -> Tuple[Tensor, Tensor]:
-        """ 计算 VE SDE 的漂移和扩散系数, 对应论文公式(30) """
+        """ Drift and Diffusion Coefficients of VE-SDE """
 
         sigma_t = self.sigma_min * (self.sigma_max / self.sigma_min) ** t
 
@@ -192,21 +179,19 @@ class VESDE(SDE):
         return f, g
 
     def p_0t(self, x_0, t) -> Tuple[Tensor, Union[float, Tensor]]:
-        """ 计算 VE SDE 的 perturbation kernel 均值和标准差, 参照论文公式(31) """
+        """  VE SDE: mean and std of perturbation kernel"""
 
         return x_0, self.sigma_min * (self.sigma_max / self.sigma_min) ** t
 
     def prior_samping(self, shape) -> Tensor:
-        """ 先验分布是 $\mathcal N(0, sigma_max^2 I)$ """
+        """ $\mathcal N(0, sigma_max^2 I)$ """
         torch.manual_seed(2)
         np.random.seed(2)
         return torch.randn(*shape) * self.sigma_max
 
     def discretize(self, x: Tensor, t: Tensor):
-        """ VE SDE 的数值离散形式, 即 SMLD 加噪的马尔科夫链, 对应论文公式(8)
-        相当于 sde() 方法的离散版本 """
 
-        # 将当前连续的时间变量转换为离散的时间步
+
         timestep_i = (t / self.T * (self.N - 1)).long()
         sigma_i = self.discrete_sigmas.to(x.device)[timestep_i]
         # $\sigma_{i-1}$
@@ -216,8 +201,6 @@ class VESDE(SDE):
             self.discrete_sigmas.to(sigma_i.device)[timestep_i - 1]
         )
 
-        # 因为将 SMLD 的马尔科夫链看作是 VE SDE 的数值离散化过程，
-        # 所以这里依照伊藤 SDE 的惯例返回漂移和扩散系数
         f = torch.zeros_like(x)
         g = (sigma_i ** 2 - adj_sigma ** 2).sqrt()
 
@@ -228,17 +211,12 @@ class VPSDE(SDE):
     def __init__(self, beta_min: float = 0.1, beta_max: float = 20., N: int = 2000):
         super().__init__(N)
 
-        # $\bar{\beta}$ VP SDE 的 \beta(0) 和 \beta(1)
         self.beta_0 = beta_min
         self.beta_1 = beta_max
 
-        # DDPM 的 N 个 noise scales ${\beta_i}$
-        # 与 VE SDE 的 \bar{\beta} 的关系是:
-        # $N \beta = \bar{\beta}$
         self.N = N
         self.discrete_betas = torch.linspace(beta_min / N, beta_max / N, N)
 
-        # DDPM 加噪过程中使用的 \alpha_i
         self.alphas = 1 - self.discrete_betas
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
         self.sqrt_alphas_cumprod = self.alphas_cumprod.sqrt()
@@ -249,7 +227,7 @@ class VPSDE(SDE):
         return 1
 
     def sde(self, x: Tensor, t: Tensor) -> Tuple[Tensor, Tensor]:
-        """ 计算 VP SDE 的漂移和扩散系数, 对应论文公式(32) """
+        """ Drift and Diffusion Coefficients of VP-SDE """
 
         beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
 
@@ -259,7 +237,7 @@ class VPSDE(SDE):
         return f, g
 
     def p_0t(self, x_0: Tensor, t: Tensor) -> Tuple[Tensor, Union[float, Tensor]]:
-        """ 计算 VP SDE 的 perturbation kernel 的均值和标准差, 参考论文公式(33) """
+        """ VP-SDE: mean and std of perturbation kernel"""
 
         exponential = -0.25 * t ** 2 * \
                       (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
@@ -270,15 +248,12 @@ class VPSDE(SDE):
         return mean, std
 
     def discretize(self, x: Tensor, t: Tensor) -> Tuple[Tensor, Tensor]:
-        """ VP SDE 的离散过程, 即 DDPM 加噪的马尔科夫链过程, 对应论文公式(10) """
 
         timestep_i = (t / self.T * (self.N - 1)).long()
 
         sqrt_beta = self.discrete_betas.to(x.device)[timestep_i].sqrt()
         sqrt_alpha = self.alphas.to(x.device)[timestep_i].sqrt()
 
-        # 因为将 DDPM 的马尔科夫链看作是 VP SDE 的数值离散化过程，
-        # 所以这里依照伊藤 SDE 的惯例返回漂移和扩散系数
         f = (sqrt_alpha - 1.)[:, None, None, None] * x
         g = sqrt_beta
 
@@ -416,4 +391,5 @@ class NoneCorrector(Corrector):
         pass
 
     def update_fn(self, x: Tensor, t: Tensor, type='hotwave') -> Tuple[Tensor, Tensor]:
+
         return x, x
