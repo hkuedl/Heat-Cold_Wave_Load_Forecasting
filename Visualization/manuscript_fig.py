@@ -5840,50 +5840,50 @@ def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsi
 
     benchmark = pd.read_csv(
         'impact of constraints/{}_benchmark.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 0].values
 
     no_ort = pd.read_csv(
         'impact of constraints/{}_no_ort.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1 
     ).iloc[:-2, 0].values
 
     no_sim = pd.read_csv(
         'impact of constraints/{}_no_sim.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1 
     ).iloc[:-2, 0].values
 
     proposed = pd.read_csv(
         'impact of constraints/{}_proposed.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 0].values
 
-    # 计算每组的统计量
+
     data_groups = [benchmark, no_ort, no_sim, proposed]
     group_names = ['no constraints', 'no orthogonal', 'no similarity', 'proposed']
 
     means = [np.mean(group) for group in data_groups]
 
-    # 设置图形
+
     fig, ax = plt.subplots(1, 2, figsize=(15, 4))
     x_pos = np.arange(len(group_names))
     bar_width = 0.3
 
-    # 绘制柱状图（均值）
+
     bars = ax[0].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
 
     best_index = 3
-    # 添加星星标记在最佳柱子上方
+    # best marker
     ax[0].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
 
-    # 添加水平虚线表示最佳基准线
+    # Add horizontal dashed lines to indicate the optimal baseline
     ax[0].axhline(y=best_value, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
 
 
-    # 美化图形
+
     ax[0].set_ylim(min_ylim, max_ylim)
     ax[0].set_xlabel('Settings', fontsize=12)
     ax[0].set_ylabel('nMAE', fontsize=12)
@@ -5898,45 +5898,44 @@ def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsi
 
     benchmark = pd.read_csv(
         'impact of constraints/{}_benchmark.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 1].values
 
     no_ort = pd.read_csv(
         'impact of constraints/{}_no_ort.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 1].values
 
     no_sim = pd.read_csv(
         'impact of constraints/{}_no_sim.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 1].values
 
     proposed = pd.read_csv(
         'impact of constraints/{}_proposed.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 1].values
 
-    # 计算每组的统计量
+
     data_groups = [benchmark, no_ort, no_sim, proposed]
     group_names = ['no constraints', 'no orthogonal', 'no similarity', 'proposed']
 
     means = [np.mean(group) for group in data_groups]
 
 
-    # 绘制柱状图（均值）
     bars = ax[1].bar(x_pos, means, bar_width, label='Mean',
                      color=color, alpha=0.7, edgecolor='black')
 
     best_index = 3
-    # 添加星星标记在最佳柱子上方
+    # best marker
     ax[1].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
 
-    # 添加水平虚线表示最佳基准线
+    # Add horizontal dashed lines to indicate the optimal baseline
     ax[1].axhline(y=best_value_rmse, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
 
-    # 美化图形
+
     ax[1].set_ylim(min_ylim+0.01, max_ylim+0.015)
     ax[1].set_xlabel('Settings', fontsize=12)
     ax[1].set_ylabel('nRMSE', fontsize=12)
@@ -5980,37 +5979,37 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
         best_value = 0.037093
         best_value_rmse = 0.0507373
 
-    # 设置图形
+
     fig, ax = plt.subplots(1, 2, figsize=(15, 4))
 
 
 
     p_1_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.1.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1 
     ).iloc[:-2, 0].values
 
     p_2_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.25.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 0].values
 
     p_3_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.5.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 0].values
 
     p_4_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.75.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 0].values
 
     p_5_mae = pd.read_csv(
         'impact of proportion_proposed/{}_1.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-2, 0].values
 
-    # 计算每组的统计量
+
     data_groups = [p_1_mae, p_2_mae, p_3_mae, p_4_mae, p_5_mae]
     group_names = ['0.10', '0.25', '0.50', '0.75', '1.00']
 
@@ -6021,20 +6020,20 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 
 
-    # 绘制柱状图（均值）
+
     bars = ax[0].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
-        # 假设第五个柱状图（索引为4）是最佳结果
+
     best_index = 4
-    # 添加星星标记在最佳柱子上方
+    # best marker
     ax[0].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
 
-    # 添加水平虚线表示最佳基准线
+    # Add horizontal dashed lines to indicate the optimal baseline
     ax[0].axhline(y=best_value, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
 
-    # 美化图形
+
     ax[0].set_ylim(min_ylim, max_ylim)
     ax[0].set_xlabel('Proportion of Synthetic Samples', fontsize=12)
     ax[0].set_ylabel('nMAE', fontsize=12)
@@ -6050,30 +6049,30 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
     # RMSE
     p_1_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.1.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-1, 1].values
 
     p_2_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.25.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-1, 1].values
 
     p_3_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.5.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  
     ).iloc[:-1, 1].values
 
     p_4_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.75.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1 
     ).iloc[:-1, 1].values
 
     p_5_mae = pd.read_csv(
         'impact of proportion_proposed/{}_1.csv'.format(country),
-        skiprows=1  # 跳过第一行（表头）
+        skiprows=1  ）
     ).iloc[:-1, 1].values
 
-    # 计算每组的统计量
+
     data_groups = [p_1_mae, p_2_mae, p_3_mae, p_4_mae, p_5_mae]
     group_names = ['0.10', '0.25', '0.50', '0.75', '1.00']
 
@@ -6082,17 +6081,17 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     means = [np.mean(group) for group in data_groups]
 
-    # 绘制柱状图（均值）
+）
     bars = ax[1].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
     best_index = 4
-    # 添加星星标记在最佳柱子上方
+    # best marker
     ax[1].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
-    # 添加水平虚线表示最佳基准线
+    # Add horizontal dashed lines to indicate the optimal baseline
     ax[1].axhline(y=best_value_rmse, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
-    # 美化图形
+
     ax[1].set_ylim(min_ylim+0.015, max_ylim+0.015)
     ax[1].set_xlabel('Proportion of Synthetic Samples', fontsize=12)
     ax[1].set_ylabel('nRMSE', fontsize=12)
@@ -6111,6 +6110,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
