@@ -1272,10 +1272,10 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     bins = np.linspace(
         0,
         1,
-        100  # 分箱数量
+        100  
     )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
+    # (np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
     counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
@@ -1283,7 +1283,7 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
+        # bottom=counts_hotwave,  
         align='edge',
         color='grey',
         alpha=0.7,
@@ -1292,10 +1292,10 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  # 分箱左边界
+        x=bin_edges[:-1],  
         height=counts_hotwave,
-        width=np.diff(bin_edges),  # 分箱宽度
-        align='edge',  # 柱子对齐分箱边缘
+        width=np.diff(bin_edges),  
+        align='edge',  
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -1308,9 +1308,9 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset_2.set_title('Sample Distribution', fontsize=labelsize)
     ax_inset_2.xaxis.set_tick_params(labelsize=ticksize)
 
-    # 印度的典型经纬度范围
-    ax.set_xticks([68, 76, 84, 92, 100])  # 东经
-    ax.set_yticks([5, 13, 21, 29])  # 北纬
+   
+    ax.set_xticks([68, 76, 84, 92, 100])  
+    ax.set_yticks([5, 13, 21, 29])  
 
     ax.set_xticklabels(['68°E', '76°E', '84°E', '92°E', '100°E'])
     ax.set_yticklabels(['5°N', '13°N', '21°N', '29°N'])
@@ -1324,12 +1324,12 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset.set_xlabel('Hour', fontsize=labelsize)
     ax_inset.set_ylabel('Load', fontsize=labelsize)
 
-    ax.set_xlim(68, 97)  # 德州经度范围
-    ax.set_ylim(5, 34)  # 德州纬度范围
+    ax.set_xlim(68, 97)  
+    ax.set_ylim(5, 34)  
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
+
     ax.set_title("Heatwave in India", fontsize=titlesize)
     plt.tight_layout()
     #plt.axis('equal')
@@ -1339,7 +1339,7 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
 #plot_India_map()
 
 def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
-    # 读取数据
+
     city_name = ['Allegheny Power System',
                  'American Electric Power Co., Inc', 'Atlantic Electric Company',
                  'Baltimore Gas and Electric Company',
@@ -1362,38 +1362,33 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
                  'Pennsylvania Electric Company', 'Pennsylvania Power & Light Company',
                  'Potomac Electric Power Company', 'Public Service Electric & Gas Company'
                  ]
-    # 读取PJM数据
-    pjm = gpd.read_file("map_data/PJM Zone.zip")
-    print("原始PJM坐标系:", pjm.crs)
 
-    # 转换为WGS84地理坐标系
+    pjm = gpd.read_file("map_data/PJM Zone.zip")
+
+    # transformed into WGS84
     pjm_wgs84 = pjm.to_crs('EPSG:4326')
-    print("转换后坐标系:", pjm_wgs84.crs)
 
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip").copy()
 
-    # 检查PJM数据的坐标系
-    print("PJM坐标系:", pjm_wgs84.crs)
-
-    # 将世界地图转换为PJM数据的坐标系
+    # world map transformed into WGS84
     world_projected = world.to_crs(pjm_wgs84.crs)
 
-    # 在投影坐标系中绘制
+
     fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
     plt.axis('equal')
     world_projected.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
     colors = []
 
-    cmap = plt.get_cmap('Greens')  # 黄-橙-红色标，适用于热力值
+    cmap = plt.get_cmap('Greens')  
     norm = Normalize(0, 0.5)
 
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
+    sm.set_array([])  
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    cbar.ax.tick_params(labelsize=ticksize)  
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -1410,17 +1405,17 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
         end_date = pd.to_datetime(end_time)
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
-            hour = int(parts[-1])  # 获取小时部分并转换为整数
+            parts = date_hour_str.rsplit('/', 1)  
+            hour = int(parts[-1])  
 
-            # 如果小时在 1 到 24 之间，递减小时
+
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
-                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
+                new_hour = (hour - 1) if hour != 1 else 0  
+                return parts[0] + f'/{new_hour:02d}'  
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
+            return date_hour_str  
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
         #start_date = pd.to_datetime(strat_time)  ## Thursday
@@ -1480,7 +1475,7 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
         print(hot_common_ratio)
         print(i)
 
-    # 绘制PJM区域（现在坐标单位一致）
+    # plot PJM regions
     for i in range(len(pjm_zones)):
         zone_name = pjm_zones[i]
         color = colors[i]
@@ -1494,9 +1489,9 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
@@ -1509,27 +1504,27 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
+        # loc="lower right",  
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
+        bbox_transform=ax.transAxes,  
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  # 分箱数量
+        100  
     )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
+    # (np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges) 
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
+        # bottom=counts_hotwave,  
         align='edge',
         color='grey',
         alpha=0.7,
@@ -1538,10 +1533,10 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  # 分箱左边界
+        x=bin_edges[:-1], 
         height=counts_hotwave,
-        width=np.diff(bin_edges),  # 分箱宽度
-        align='edge',  # 柱子对齐分箱边缘
+        width=np.diff(bin_edges),  
+        align='edge',  
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -1554,8 +1549,8 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax_inset_2.set_title('Sample Distribution', fontsize=labelsize)
     ax_inset_2.xaxis.set_tick_params(labelsize=ticksize)
 
-    ax.set_xlim(-91, -73)  # 经度范围（西→东）
-    ax.set_ylim(32, 42)  # 纬度范围（南→北）
+    ax.set_xlim(-91, -73)  
+    ax.set_ylim(32, 42)  
     ax.set_yticks([30, 35, 40])
     ax.set_xticks([-90, -85, -80, -75])
     ax.set_xticklabels(['-90°E', '-85°E', '-80°E', '-75°E'])
@@ -1572,7 +1567,7 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
+
     ax.set_title("Heatwave in PJM", fontsize=titlesize)
     plt.tight_layout()
     fig.savefig('figures/load_change_in_{}.pdf'.format(region))
@@ -1599,16 +1594,15 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
 
     bar_width = 0.5
     for i in range(6):
-        # 计算数据
+
         data1 = [mae_proposed_list[i], rmse_proposed_list[i]]
         data2 = [mae_baseline_list[i] - mae_proposed_list[i],
                  rmse_baseline_list[i] - rmse_proposed_list[i]]
 
-        # 设置 x 轴位置
-        x = np.arange(len(data1))  # x 轴位置
-        x_offset = 0.2  # 设置偏移量以减少柱子间距
+        # x axis location
+        x = np.arange(len(data1)) 
+        x_offset = 0.2  
 
-        # 绘制柱状图
         bars1 = ax[i].bar(x - x_offset / 2, data1,
                           width=bar_width,
                           color=colors[i],
@@ -1622,17 +1616,16 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
                           color=colors[i], alpha=0.5,
                           edgecolor='black',
                           linestyle='--',
-                          linewidth=2,  # 可选：添加填充图案
+                          linewidth=2,  
                           label='Reduction')
 
-        # 计算并添加文本标签
         for j in range(len(data1)):
-            if data2[j] != 0:  # 确保不除以零
+            if data2[j] != 0:  
                 value = data2[j]/data1[j]
                 ax[i].text(x[j] - x_offset / 2, data1[j] + data2[j] + 0.002, f'{value*100:.1f}'+'%↓',
                            ha='center', va='bottom', color='#C24841FF', fontsize=ticksize)
 
-        # 美化坐标轴
+
         ax[i].spines['top'].set_visible(False)
         ax[i].spines['right'].set_visible(False)
         ax[i].set_ylim(0, 0.095)
@@ -1640,12 +1633,12 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
         ax[i].set_title(country_list[i], fontsize=titlesize)
         ax[i].legend(frameon=False, fontsize=ticksize)
 
-        # 设置 x 轴范围以增加柱子与 y 轴之间的距离
+
         ax[i].set_xlim(-0.75, len(data1) - 0.5)
 
-        # 设置 x 轴刻度和标签
-        ax[i].set_xticks(x - x_offset / 2)  # 设置 x 轴刻度位置
-        ax[i].set_xticklabels(['nMAE', 'nRMSE'], rotation=0, fontsize=ticksize, ha='center', va='top')  # 设置 x 轴标签
+
+        ax[i].set_xticks(x - x_offset / 2)  
+        ax[i].set_xticklabels(['nMAE', 'nRMSE'], rotation=0, fontsize=ticksize, ha='center', va='top') 
         ax[i].tick_params(axis='both', labelsize=labelsize)
 
     ax[0].set_ylabel('Forecasting Error', fontsize=labelsize)
@@ -2108,29 +2101,26 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
     ax[0].plot([0, 0.1], [0, 0.1],
             'k--', alpha=0.5, linewidth=1, label='y=x')
 
-    # 定义对称中心点
+    # center location
     center = (0.07, 0.07)
-
-    # y=x的斜率是1，垂直线的斜率是-1
-    # 箭头长度
     center_x = 0.07
     center_y = 0.07
     arrow_length = 0.03
     length = 0.03
     offset = length / np.sqrt(3)
-    text_offset = 0.01  # 文字额外偏移
+    text_offset = 0.01  
 
 
     ax[0].annotate('Proposed\nbetter',
-                xy=(center_x - offset, center_y + offset),  # 箭头终点
-                xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  # 文字位置（向右下偏移）
+                xy=(center_x - offset, center_y + offset),  
+                xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  
                 fontsize=ticksize, ha='center', va='center', color=color1,
                 arrowprops=dict(color=color1, arrowstyle='->', lw=2))
 
-    # 第二个箭头：Baselines better（蓝色）
+
     ax[0].annotate('Baselines\nbetter',
-                xy=(center_x + offset, center_y - offset),  # 箭头终点
-                xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  # 文字位置（向左上偏移）
+                xy=(center_x + offset, center_y - offset),  
+                xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  
                 fontsize=ticksize, ha='center', va='center', color=color2,
                 arrowprops=dict(color=color2, arrowstyle='->', lw=2))
 
@@ -2181,28 +2171,25 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
     ax[1].plot([0, 0.1], [0, 0.1],
                'k--', alpha=0.5, linewidth=1, label='y=x')
 
-    # 定义对称中心点
-    center = (0.07, 0.07)
 
-    # y=x的斜率是1，垂直线的斜率是-1
-    # 箭头长度
+    center = (0.07, 0.07)
     center_x = 0.07
     center_y = 0.07
     arrow_length = 0.03
     length = 0.03
     offset = length / np.sqrt(3)
-    text_offset = 0.01  # 文字额外偏移
+    text_offset = 0.01  
 
     ax[1].annotate('Proposed\nbetter',
-                   xy=(center_x - offset, center_y + offset),  # 箭头终点
-                   xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  # 文字位置（向右下偏移）
+                   xy=(center_x - offset, center_y + offset),  
+                   xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  
                    fontsize=ticksize, ha='center', va='center', color=color1,
                    arrowprops=dict(color=color1, arrowstyle='->', lw=2))
 
-    # 第二个箭头：Baselines better（蓝色）
+
     ax[1].annotate('Baselines\nbetter',
-                   xy=(center_x + offset, center_y - offset),  # 箭头终点
-                   xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  # 文字位置（向左上偏移）
+                   xy=(center_x + offset, center_y - offset),  
+                   xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  
                    fontsize=ticksize, ha='center', va='center', color=color2,
                    arrowprops=dict(color=color2, arrowstyle='->', lw=2))
 
@@ -2219,15 +2206,15 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
 
 
     ax[0].legend(loc='upper center',
-              bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
-              ncol=2,  # 设置列数以水平排列
+              bbox_to_anchor=(0.75, 0.3),  
+              ncol=2,  
               fontsize=ticksize,
               frameon=True,
               edgecolor='black')
 
     ax[1].legend(loc='upper center',
-                 bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
-                 ncol=2,  # 设置列数以水平排列
+                 bbox_to_anchor=(0.75, 0.3),  
+                 ncol=2,  
                  fontsize=ticksize,
                  frameon=True,
                  edgecolor='black')
@@ -2340,7 +2327,7 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
 
         title = ['Input Sequences', 'Labels']
 
-        ## 前两张图分别画
+
         for j in range(0, 2):
             # Define index mapping: j=0 corresponds to the range (0, 24), j=1 corresponds to the range (168, 192).
             if j == 0:
@@ -2429,24 +2416,22 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
             ax[1, j].spines['right'].set_visible(False)
 
 
-        # 合并两个子图的图例句柄和标签
-        handles = [line1, line4, line5]  # 所有线条的句柄
-        labels = [h.get_label() for h in handles]  # 对应的标签
+        # Merge the legend handles and labels of two subgraphs
+        handles = [line1, line4, line5]  
+        labels = [h.get_label() for h in handles]  
 
 
-        fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  # y参数控制垂直位置
+        fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  
         #handles, labels = ax[0, 0].get_legend_handles_labels()
         fig.legend(handles, labels, loc='upper center',
-                   bbox_to_anchor=(0.5, 0.94),  # 调整垂直位置
-                   ncol=3,  # 设置列数以水平排列
+                   bbox_to_anchor=(0.5, 0.94),  
+                   ncol=3,  
                    fontsize=ticksize,
                    frameon=True,
                    edgecolor='black')
 
         fig.suptitle("Input Sequences and Labels in the Original Dataset",
                      y=1, fontsize=titlesize)
-        #fig.subplots_adjust(bottom=0.2, top=0.9)  # 预留底部空间
-        #ax[0].set_title('Sample Visualization', fontsize=16)
         plt.tight_layout(rect=[0, 0, 1, 0.92])
 
         plt.savefig('figures/synthetic_sample_vis.pdf')
@@ -2534,10 +2519,9 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
 
             plt.rcParams['xtick.direction'] = 'in'
             plt.rcParams['ytick.direction'] = 'in'
-            # fig, ax = plt.subplots(2, 4, figsize=(18, 6))
+
             fig, ax = plt.subplots(2, 2, figsize=(9, 6))
-            # ax = ax.flatten()
-            # 计算均值、最大值和最小值
+
             mean_load = np.mean(load_slice_list, axis=0)
             max_load = np.max(load_slice_list, axis=0)
             min_load = np.min(load_slice_list, axis=0)
@@ -2547,12 +2531,9 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
             min_tem = np.min(tem_slice_list, axis=0)
             x = np.arange(192)
 
-            # 绘制均值曲线
-            # ax[0].plot(x, mean_curve, color='blue', label='Mean Curve')
 
             title = ['Input Sequences', 'Labels']
 
-            ## 前两张图分别画
 
             for j in range(0, 2):
 
@@ -2563,7 +2544,6 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                     start_idx = 168
                     end_idx = 192
 
-                # 定义索引映射：j=2对应区间(0,24)，j=3对应区间(168,192)
                 if j == 2:
                     start_idx = 72
                     end_idx = 96
@@ -2634,7 +2614,7 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                     ax[0, j].set_yticklabels([])
                     ax[1, j].set_yticklabels([])
 
-                # 修改x轴刻度标签以反映实际的时间索引
+
                 ax[0, j].set_xticks([start_idx, start_idx + 12, end_idx])
                 ax[1, j].set_xticks([start_idx, start_idx + 12, end_idx])
                 ax[0, j].set_xticklabels([])
@@ -2645,22 +2625,21 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                 ax[1, j].spines['top'].set_visible(False)
                 ax[1, j].spines['right'].set_visible(False)
 
-            # 合并两个子图的图例句柄和标签
-            handles = [line1, line2, line3]  # 所有线条的句柄
-            labels = [h.get_label() for h in handles]  # 对应的标签
+            # Merge the legend handles and labels of two subgraphs
+            handles = [line1, line2, line3]  
+            labels = [h.get_label() for h in handles]  
 
-            fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  # y参数控制垂直位置
+            fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  
             # handles, labels = ax[0, 0].get_legend_handles_labels()
             fig.legend(handles, labels, loc='upper center',
-                       bbox_to_anchor=(0.5, 0.94),  # 调整垂直位置
-                       ncol=3,  # 设置列数以水平排列
+                       bbox_to_anchor=(0.5, 0.94),  
+                       ncol=3,  
                        fontsize=ticksize,
                        frameon=True,
                        edgecolor='black')
             fig.suptitle("Input Sequences and labels in the Synthetic Dataset",
                          y=1, fontsize=titlesize)
-            # fig.subplots_adjust(bottom=0.2, top=0.9)  # 预留底部空间
-            # ax[0].set_title('Sample Visualization', fontsize=16)
+
             plt.tight_layout(rect=[0, 0, 1, 0.92])
 
             plt.savefig('figures/synthetic_sample_vis.pdf')
@@ -2758,16 +2737,14 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
         df = pd.DataFrame({'Load': sample_load_list, 'Temperature': sample_tem_list,
                            'group': np.repeat('A',sample_load_list.shape[0]) })
 
-        #fig, ax = plt.subplots(1, 3, figsize=(15, 5))  # 1行3列，总宽度18，高度6
-        #fig.subplots_adjust(wspace=0.4)  # 调整子图之间的水平间距
 
 
 
         #fig, ax = plt.subplots(2, 1, figsize=(6, 6))
         g = sns.jointplot(data=df, x='Load', y='Temperature',
                           color=original_color,
-                          height=5.25,  # 控制整个图形的高度
-                          ratio=3,  # 主图与边缘图的比例（值越大，主图越小）
+                          height=5.25,  
+                          ratio=3,  
                           space=0.3, s=30, lw=0.1, edgecolor=None,
                           marker='o', alpha=0.5,  marginal_ticks=True)
 
@@ -2777,31 +2754,26 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
             label="Synthetic Samples", s=10, edgecolor=None, lw=0.5
         )
 
-        # 计算统一的坐标范围和分箱
+
         x_min = 0
         x_max = 0.9
         y_min = 0
         y_max = 0.9
         bins_x = np.linspace(x_min, x_max, 100)
         bins_y = np.linspace(y_min, y_max, 100)
-        # 清空原始边缘分布
+
         g.ax_marg_x.clear()
         g.ax_marg_y.clear()
 
 
-        # 更新 x 轴边缘分布（包含 new_x）
-        #sns.histplot(x=sample_load_list, ax=g.ax_marg_x, bins=bins_x,
-        #             color="#682C37FF", alpha=0.5, stat="density")
-        # 计算两组数据的直方图
         hist1, bin_edges = np.histogram(generated_sample_load_list, bins=bins_x, density=True)
         hist2, _ = np.histogram(sample_load_list, bins=bins_x, density=True)
 
-        # 绘制堆叠柱状图
         g.ax_marg_x.bar(
-            x=bins_x[:-1],  # 分箱左边缘作为x坐标
-            height=hist1,  # 高度为频数/密度
-            width=np.diff(bins_x),  # 宽度为分箱间隔
-            color=synthetic_color,  # 原始数据颜色
+            x=bins_x[:-1],  
+            height=hist1,  
+            width=np.diff(bins_x),  
+            color=synthetic_color,  
             alpha=0.5,
             edgecolor=None,
             linewidth=1,
@@ -2811,8 +2783,8 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
             x=bins_x[:-1],
             height=hist2,
             width=np.diff(bins_x),
-            bottom=hist1,  # 垂直堆叠基准
-            color=original_color,  # 生成数据颜色
+            bottom=hist1,  
+            color=original_color,  
             alpha=1,
             edgecolor=None,
             linewidth=1,
@@ -2820,59 +2792,46 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
         )
 
 
-        # 计算两组数据的直方图
+
         hist1, bin_edges = np.histogram(generated_sample_tem_list, bins=bins_y, density=True)
         hist2, _ = np.histogram(sample_tem_list, bins=bins_y, density=True)
 
-        # 绘制堆叠柱状图
+
         g.ax_marg_y.barh(
             y=bin_edges[:-1],
             width=hist1,
             height=np.diff(bin_edges),
             color=synthetic_color,
             alpha=0.5,
-            edgecolor=None,  # 边框颜色
+            edgecolor=None, 
             linewidth=1
         )
         g.ax_marg_y.barh(
             y=bin_edges[:-1],
             width=hist2,
             height=np.diff(bin_edges),
-            left=hist1,  # 关键：以hist1为基准堆叠
+            left=hist1,  
             color=original_color,
             alpha=1,
-            edgecolor=None,  # 边框颜色
+            edgecolor=None,  
             linewidth=1,
         )
 
-        #sns.kdeplot(
-        #    y=sample_tem_list,
-        #    ax=g.ax_marg_y,
-        #    color="#682C37FF",
-        #    linewidth=2
-        #)
 
-        #sns.kdeplot(
-        #    y=generated_sample_tem_list,
-        #    ax=g.ax_marg_y,
-        #    color="#7887A4FF",
-        #    linewidth=2
-        #)
-
-        # 隐藏所有边缘分布的刻度和标签
+        # Hide all edge distribution scales and labels
         g.ax_marg_x.tick_params(
-            axis='both',  # 同时操作x和y轴（虽然marg_x只有x轴）
-            which='both',  # 主刻度和次刻度
-            length=5,  # 刻度线长度为0
-            labelbottom=False,  # 隐藏x轴标签
+            axis='both',  
+            which='both',  
+            length=5, 
+            labelbottom=False, 
             labelleft=False,
-            width=2# 隐藏y轴标签（对marg_x无效，但保留以防万一）
+            width=2
         )
         g.ax_marg_y.tick_params(
             axis='both',
             which='both',
             length=5,
-            labelleft=False,  # 隐藏y轴标签
+            labelleft=False, 
             labelbottom=False,
             width=2
         )
@@ -2880,43 +2839,43 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
 
         def get_handles():
             scatter_handle1 = plt.Line2D(
-                [0], [0],  # 虚拟数据点
-                marker='o',  # 与您的散点图标记一致
-                color='w',  # 将线条颜色设为白色（或‘none’）
-                markerfacecolor=original_color,  # 标记的填充颜色
-                markersize=8,  # 标记大小
-                label='Original-Samples',  # 与您的散点图标签一致
-                alpha=0.5  # 透明度一致
+                [0], [0],  
+                marker='o', 
+                color='w', 
+                markerfacecolor=original_color,  
+                markersize=8,  
+                label='Original-Samples',  
+                alpha=0.5  
             )
 
             scatter_handle2 = plt.Line2D(
-                [0], [0],  # 虚拟数据点
-                marker='o',  # 与您的散点图标记一致
-                color='w',  # 将线条颜色设为白色（或‘none’）
-                markerfacecolor=synthetic_color,  # 标记的填充颜色
-                markersize=8,  # 标记大小
-                label='Synthetic-Samples',  # 与您的散点图标签一致
-                alpha=1  # 透明度一致
+                [0], [0],  
+                marker='o',  
+                color='w',  
+                markerfacecolor=synthetic_color,  
+                markersize=8,  
+                label='Synthetic-Samples',  
+                alpha=1  
             )
 
 
 
-            # 为柱状图创建一个图例句柄（使用一个矩形补丁）
+
             bar_handle1 = mpatches.Patch(
-                color=original_color,  # 与您的柱状图颜色一致
-                alpha=1,  # 与您的柱状图透明度一致
-                label='Original-Density'  # 与您的柱状图标签一致
+                color=original_color,  
+                alpha=1,  
+                label='Original-Density'  
             )
 
             bar_handle2 = mpatches.Patch(
-                color=synthetic_color,  # 与您的柱状图颜色一致
-                alpha=0.5,  # 与您的柱状图透明度一致
-                label='Synthetic-Density'  # 与您的柱状图标签一致
+                color=synthetic_color,  
+                alpha=0.5,  
+                label='Synthetic-Density'  
             )
 
-            # 2. 将句柄和标签合并到一个列表中
+
             handles = [scatter_handle1, scatter_handle2, bar_handle1, bar_handle2]
-            labels = [h.get_label() for h in handles]  # 从句柄中提取对应的标签
+            labels = [h.get_label() for h in handles]  
 
             return handles
 
@@ -2924,26 +2883,21 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
 
         g.ax_joint.legend(
             handles = get_handles(),
-            loc="lower center",  # 图例位置
+            loc="lower center",  
             bbox_to_anchor=(0.75, 0.75),
-            frameon=False,  # 显示边框
-            fontsize=ticksize,  # 字体大小
+            frameon=False,  
+            fontsize=ticksize,  
             edgecolor=None,
             facecolor=None
         )
 
         g.ax_joint.set_xlim(x_min, x_max)
         g.ax_joint.set_ylim(y_min, y_max)
-        g.ax_joint.tick_params(axis='both', labelsize=ticksize)  # 刻度标签字体大小
-        g.ax_joint.set_xlabel("Norm. Load", fontsize=labelsize)  # x轴标签字体大小
-        g.ax_joint.set_ylabel("Norm. Temp.", fontsize=labelsize)  # y轴标签字体大小
-        g.ax_marg_y.set_xlabel('Density', fontsize=labelsize)  # 设置y轴标签
-        #g.ax_marg_y.tick_params(axis='y', labelleft=True)  # 确保y轴刻度标签显示
-        #g.ax_marg_x.set_xlim(x_min, x_max)
-        #g.ax_marg_y.set_ylim(y_min, y_max)
-        #g.ax_joint.grid(True, linestyle='-', alpha=0.7, linewidth=0.5)
-        #g.fig.subplots_adjust(top=0.8)
-        #g.fig.suptitle(country, y=1, fontsize=titlesize)
+        g.ax_joint.tick_params(axis='both', labelsize=ticksize)  
+        g.ax_joint.set_xlabel("Norm. Load", fontsize=labelsize)  
+        g.ax_joint.set_ylabel("Norm. Temp.", fontsize=labelsize)  
+        g.ax_marg_y.set_xlabel('Density', fontsize=labelsize) 
+
         plt.locator_params(axis='both', nbins=5)  # 每轴最多显示4个刻度
         plt.tight_layout()
         plt.show()
@@ -6110,6 +6064,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
+
 
 
 
