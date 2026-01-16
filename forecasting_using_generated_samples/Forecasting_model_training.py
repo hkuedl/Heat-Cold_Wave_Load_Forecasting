@@ -43,9 +43,8 @@ def data_scaler(country='Belgium', strat_time = '2015/01/01/00', end_time = '201
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
 
-    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  
+    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  
     load = np.array(data['Load'])
     temperature = np.array(data['Temperature'])
 
@@ -59,9 +58,8 @@ def clear_diff_data(country='Belgium', strat_time = '2015/01/01/00', end_time = 
     end_date = pd.to_datetime(end_time)
     data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
 
-    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
-    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  
+    data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  
 
     maxload, minload, maxtem, mintem = data_scaler(country)
 
@@ -1378,3 +1376,4 @@ for test_country in test_country_list:
 
 
 #visualization('Austria')
+
