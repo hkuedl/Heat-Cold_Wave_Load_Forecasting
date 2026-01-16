@@ -2,8 +2,10 @@ import torch
 
 import sys
 print(sys.path)
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Informer')
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Autoformer')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(os.path.join(current_dir, 'Informer'))
+sys.path.append(os.path.join(current_dir, 'Autoformer'))
 import csv
 
 import pandas as pd
@@ -561,5 +563,6 @@ def plot_day_by_day(titlesize=16, ticksize=16, labelsize=16):
 
     plt.savefig('forecasting_curves.pdf')
     plt.show()
+
 
 #plot_day_by_day()
