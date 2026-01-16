@@ -2,8 +2,10 @@ import torch
 
 import sys
 print(sys.path)
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Informer')
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Autoformer')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(os.path.join(current_dir, 'Informer'))
+sys.path.append(os.path.join(current_dir, 'Autoformer'))
 import csv
 
 import pandas as pd
@@ -1373,5 +1375,6 @@ for test_country in test_country_list:
     with open(filename, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(results_list)  # 写入列表中的所有行
+
 
 #visualization('Austria')
