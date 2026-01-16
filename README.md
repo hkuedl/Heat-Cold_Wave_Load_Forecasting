@@ -68,4 +68,10 @@ Codes and data related to figures in our manuscript and supplementary are provid
 
 
 ## Hyperparameters Settings
+According to our experiments, some variables in codes can be changed if needed:
 
+(1) the proportion of synthetic samples used: proportion
+
+(2) weights of similarity and orhogonality penalties: alpha, beta
+
+(3) the weight of the classifier guidance: numda
