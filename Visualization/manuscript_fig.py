@@ -1654,17 +1654,17 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
 
 ## Fig. 3
 def plot_bar_subplot_nMAE(data_name = '广东2023热浪'):
-    data_1 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（广东2023热浪）'.format(data_name),
+    data_1 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（广东2023热浪）'.format(data_name),
                          header=1, usecols='B:Q').values
-    data_2 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（PJM2023热浪）'.format(data_name),
+    data_2 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（PJM2023热浪）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_3 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（德州2023热浪）'.format(data_name),
+    data_3 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（德州2023热浪）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_4 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（印度2022热浪）'.format(data_name),
+    data_4 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（印度2022热浪）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_5 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（湖南2023寒潮）'.format(data_name),
+    data_5 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（湖南2023寒潮）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_6 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（欧洲2018寒潮）'.format(data_name),
+    data_6 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（欧洲2018寒潮）'.format(data_name),
                            header=1, usecols='B:Q').values
 
     # print(data.values)
@@ -1829,17 +1829,17 @@ def plot_bar_subplot_nMAE(data_name = '广东2023热浪'):
 
 
 def plot_bar_subplot_nRMSE(data_name = '广东2023热浪'):
-    data_1 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（广东2023热浪）'.format(data_name),
+    data_1 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（广东2023热浪）'.format(data_name),
                          header=1, usecols='B:Q').values
-    data_2 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（PJM2023热浪）'.format(data_name),
+    data_2 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（PJM2023热浪）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_3 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（德州2023热浪）'.format(data_name),
+    data_3 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（德州2023热浪）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_4 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（印度2022热浪）'.format(data_name),
+    data_4 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（印度2022热浪）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_5 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（湖南2023寒潮）'.format(data_name),
+    data_5 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（湖南2023寒潮）'.format(data_name),
                            header=1, usecols='B:Q').values
-    data_6 = pd.read_excel('../极端温度实验结果.xlsx', sheet_name='基础（欧洲2018寒潮）'.format(data_name),
+    data_6 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（欧洲2018寒潮）'.format(data_name),
                            header=1, usecols='B:Q').values
 
     # print(data.values)
@@ -2075,7 +2075,7 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
     informer = []
     autoformer = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('../极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
         for j in range(data.shape[0]-1):
@@ -2146,7 +2146,7 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
     informer = []
     autoformer = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('../极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
         for j in range(data.shape[0] - 1):
@@ -2227,14 +2227,15 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
 #plot_overall_scatter(weather_type='coldwave')
 
 
-
 ##Fig. 4
 def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, ticksize=14, labelsize=18):
     import sys
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples')
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Model_parameters')
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_training_2D')
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_Model_2D')
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples'))
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/Model_parameters'))
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_training_2D'))
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_Model_2D'))
     print(sys.path)
     from forecasting_using_generated_samples.generate_new_samples_2D import generate_coldwave_samples
     from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -2441,11 +2442,7 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
 
 def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticksize=14, labelsize=18):
         import sys
-        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples')
-        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Model_parameters')
-        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_training_2D')
-        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_Model_2D')
-        print(sys.path)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
         from forecasting_using_generated_samples.generate_new_samples_2D import generate_coldwave_samples
         from mpl_toolkits.axes_grid1 import make_axes_locatable
         # from forecasting_using_generated_samples.Forecasting_model_training import generate_coldwave_samples
@@ -2656,10 +2653,12 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
                                                 synthetic_color='#F58E87',
                                                 weather_type='coldwave'):
     import sys
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples')
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Model_parameters')
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_training_2D')
-    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_Model_2D')
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples'))
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/Model_parameters'))
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_training_2D'))
+    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_Model_2D'))
     print(sys.path)
     from forecasting_using_generated_samples.generate_new_samples_2D import generate_coldwave_samples
     # from forecasting_using_generated_samples.Forecasting_model_training import generate_coldwave_samples
@@ -3096,7 +3095,7 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     da_scatter = []
     common_scatter = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('../极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
 
@@ -3145,7 +3144,7 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     da_scatter = []
     common_scatter = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('../极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
 
@@ -3730,7 +3729,7 @@ def plot_scalability_bar(titlesize=12, ticksize=12, labelsize=12, weather_type='
         common_scatter = []
 
 
-        data = pd.read_excel('../极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
         if i==2:
             print(data)
 
@@ -4145,7 +4144,7 @@ def save_extreme_ramping_rate():
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
                  ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr)}
     df = pd.DataFrame(data)
-    df.to_excel('ramping_common.xlsx', index=False)
+    df.to_excel('temporary_maintained_data/ramping_common.xlsx', index=False)
 
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4158,7 +4157,7 @@ def save_extreme_ramping_rate():
                ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr)}
 
     df = pd.DataFrame(data)
-    df.to_excel('ramping_extreme.xlsx', index=False)
+    df.to_excel('temporary_maintained_data/ramping_extreme.xlsx', index=False)
 
 
 def save_extreme_values():
@@ -4513,7 +4512,7 @@ def save_extreme_values():
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
                  ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr)}
     df = pd.DataFrame(data)
-    df.to_excel('extreme_values_common.xlsx', index=False)
+    df.to_excel('temporary_maintained_data/extreme_values_common.xlsx', index=False)
 
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4526,7 +4525,7 @@ def save_extreme_values():
                ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr)}
 
     df = pd.DataFrame(data)
-    df.to_excel('extreme_values_extreme.xlsx', index=False)
+    df.to_excel('temporary_maintained_data/extreme_values_extreme.xlsx', index=False)
 
 
 def save_extreme_energy():
@@ -4898,7 +4897,7 @@ def save_extreme_energy():
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
                  ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr)}
     df = pd.DataFrame(data)
-    df.to_excel('energy_common.xlsx', index=False)
+    df.to_excel('temporary_maintained_data/energy_common.xlsx', index=False)
 
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4911,7 +4910,7 @@ def save_extreme_energy():
                ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr)}
 
     df = pd.DataFrame(data)
-    df.to_excel('energy_extreme.xlsx', index=False)
+    df.to_excel('temporary_maintained_data/energy_extreme.xlsx', index=False)
 
 #save_extreme_ramping_rate()
 #save_extreme_values()
@@ -6016,7 +6015,7 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     p_5_mae = pd.read_csv(
         'impact of proportion_proposed/{}_1.csv'.format(country),
-        skiprows=1  
+        skiprows=1
     ).iloc[:-1, 1].values
 
 
@@ -6057,7 +6056,6 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
-
 
 
 
