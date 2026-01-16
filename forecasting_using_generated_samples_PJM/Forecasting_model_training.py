@@ -2,8 +2,10 @@ import torch
 
 import sys
 print(sys.path)
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples_PJM/Informer')
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples_PJM/Autoformer')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(os.path.join(current_dir, 'Informer'))
+sys.path.append(os.path.join(current_dir, 'Autoformer'))
 
 
 import pandas as pd
@@ -1495,3 +1497,4 @@ for test_country in test_country_list:
 
 
 #visualization('Austria')
+
