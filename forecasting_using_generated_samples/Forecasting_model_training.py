@@ -2,10 +2,8 @@ import torch
 
 import sys
 print(sys.path)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)
-sys.path.append(os.path.join(current_dir, 'Informer'))
-sys.path.append(os.path.join(current_dir, 'Autoformer'))
+sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Informer')
+sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Autoformer')
 import csv
 
 import pandas as pd
@@ -24,7 +22,9 @@ from torch.optim import Adam, AdamW, SGD
 from tqdm import tqdm
 import random
 import matplotlib.pyplot as plt
-from generate_new_samples_2D import generate_hotwave_samples, generate_coldwave_samples
+from generate_new_samples_2D import generate_hotwave_samples, \
+    generate_coldwave_samples, generate_coldwave_only, \
+    generate_bootstrap, generate_gaussian, generate_smote, generate_smote_with_noise, generate_dirichlet_mixup
 import os
 
 device = "cuda:2"
@@ -34,7 +34,9 @@ period = 8
 
 
 proportion = 1
-
+#augmentation_type = 'mixup'
+augmentation_type = 'proposed'
+#extreme_only = True
 
 
 def data_scaler(country='Belgium', strat_time = '2015/01/01/00', end_time = '2017/12/31/23'):
@@ -375,9 +377,9 @@ def training_process(country='Belgium', model_type='ANN', data_aug=0, coldwave_s
             f"Num Samples: {num_train_samples}"
         )
 
-        df_test_loss = pd.DataFrame(test_loss_list, columns=['My Data'])
-        df_test_loss.to_excel('Convergence_curve/test_basic_{}_{}_{}.xlsx'.format(country, model_type, data_aug),
-                              index=True)
+        #df_test_loss = pd.DataFrame(test_loss_list, columns=['My Data'])
+        #df_test_loss.to_excel('Convergence_curve/test_basic_{}_{}_{}.xlsx'.format(country, model_type, data_aug),
+        #                      index=True)
 
     return model
 
@@ -858,12 +860,12 @@ def training_process_dsn(country='Belgium', model_type='ANN', coldwave_samples=N
             f"Num Samples: {num_train_samples}"
         )
 
-    df_information_loss = pd.DataFrame(information_loss_list, columns=['My Data'])
-    df_information_loss.to_excel('Convergence_curve/convergence_{}_{}.xlsx'.format(country, model_type),
-                                 index=True)
-    df_test_loss = pd.DataFrame(test_loss_list, columns=['My Data'])
-    df_test_loss.to_excel('Convergence_curve/test_proposed_{}_{}.xlsx'.format(country, model_type),
-                                 index=True)
+    #df_information_loss = pd.DataFrame(information_loss_list, columns=['My Data'])
+    #df_information_loss.to_excel('Convergence_curve/convergence_{}_{}.xlsx'.format(country, model_type),
+    #                             index=True)
+    #df_test_loss = pd.DataFrame(test_loss_list, columns=['My Data'])
+    #df_test_loss.to_excel('Convergence_curve/test_proposed_{}_{}.xlsx'.format(country, model_type),
+    #                             index=True)
 
 
     return model
@@ -928,9 +930,9 @@ def results_visualization(country='Belgium', model_type='ANN', data_aug=0, coldw
     })
 
     if data_aug == 0:
-        df.to_csv('results/results_basic_{}_{}'.format(country, model_type), index=False)
+        df.to_csv('results_R1/results_basic_{}_{}'.format(country, model_type), index=False)
     else:
-        df.to_csv('results/results_basic_{}_{}_{}'.format(country, model_type, proportion), index=False)
+        df.to_csv('results_R1/results_basic_{}_{}_{}'.format(country, model_type, proportion), index=False)
 
     print('MAE: ', MAE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
     print('RMSE: ', RMSE(forecasted_value[24 * day:24 * (day + period)], true_value[24 * day:24 * (day + period)]))
@@ -984,7 +986,7 @@ def results_visualization_nbeats(country='Belgium', data_aug=0, model_type='nbea
         'forecasted': forecasted_value
     })
 
-    df.to_csv('results/results_basic_{}_{}'.format(country, model_type), index=False)
+    df.to_csv('results_R1/results_basic_{}_{}'.format(country, model_type), index=False)
 
     def MAE(x1, x2):
         lst = np.array([abs(x1[i] - x2[i]) for i in range(x1.shape[0])])
@@ -1042,7 +1044,7 @@ def results_visualization_impactnet(country='Belgium', data_aug=0, model_type='i
         'forecasted': forecasted_value
     })
 
-    df.to_csv('results/results_basic_{}_{}'.format(country, model_type), index=False)
+    df.to_csv('results_R1/results_basic_{}_{}'.format(country, model_type), index=False)
 
     def MAE(x1, x2):
         lst = np.array([abs(x1[i] - x2[i]) for i in range(x1.shape[0])])
@@ -1109,7 +1111,7 @@ def results_visualization_informer(country='Belgium', data_aug=0, model_type='in
         'forecasted': forecasted_value
     })
 
-    df.to_csv('results/results_basic_{}_{}'.format(country, model_type), index=False)
+    df.to_csv('results_R1/results_basic_{}_{}'.format(country, model_type), index=False)
 
     day = 19
     period = 8
@@ -1159,7 +1161,7 @@ def results_visualization_autoformer(country='Belgium', data_aug=0, model_type='
         'forecasted': forecasted_value
     })
 
-    df.to_csv('results/results_basic_{}_{}'.format(country, model_type), index=False)
+    df.to_csv('results_R1/results_basic_{}_{}'.format(country, model_type), index=False)
 
     def MAE(x1, x2):
         lst = np.array([abs(x1[i] - x2[i]) for i in range(x1.shape[0])])
@@ -1235,8 +1237,8 @@ def results_visualization_dsn(country='Belgium', model_type='ANN', coldwave_samp
      })
 
 
-    #df.to_csv('results/results_proposed_{}_{}'.format(country, model_type), index=False)
-    df.to_csv('results/results_proposed_{}_{}_{}'.format(country, model_type, proportion), index=False)
+    #df.to_csv('results_R1/results_proposed_{}_{}'.format(country, model_type), index=False)
+    df.to_csv('results_R1/results_proposed_{}_{}_{}'.format(country, model_type, proportion), index=False)
 
     plt.rcParams['xtick.direction'] = 'in'
     plt.rcParams['ytick.direction'] = 'in'
@@ -1277,19 +1279,19 @@ def visualization(test_country, coldwave_samples):
 
     resuts_list = []
     print('ANN_proposed: ')
-    mae, rmse = results_visualization_dsn(country=test_country, model_type='ANN', coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization_dsn(country=test_country, model_type='ANN', coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('ANN: ')
-    mae, rmse = results_visualization(country=test_country, model_type='ANN', data_aug=0, coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization(country=test_country, model_type='ANN', data_aug=0, coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('ANN_DA: ')
-    mae, rmse = results_visualization(country=test_country, model_type='ANN', data_aug=1, coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization(country=test_country, model_type='ANN', data_aug=1, coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('LSTM_proposed: ')
     mae, rmse = results_visualization_dsn(country=test_country, model_type='LSTM', coldwave_samples=coldwave_samples)
@@ -1302,44 +1304,44 @@ def visualization(test_country, coldwave_samples):
     resuts_list.append(rmse)
 
     print('LSTM_DA: ')
-    mae, rmse = results_visualization(country=test_country, model_type='LSTM', data_aug=1, coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization(country=test_country, model_type='LSTM', data_aug=1, coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('CNN_proposed: ')
-    mae, rmse = results_visualization_dsn(country=test_country, model_type='CNN', coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization_dsn(country=test_country, model_type='CNN', coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('CNN: ')
-    mae, rmse = results_visualization(country=test_country, model_type='CNN', data_aug=0, coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization(country=test_country, model_type='CNN', data_aug=0, coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('CNN_DA: ')
-    mae, rmse = results_visualization(country=test_country, model_type='CNN', data_aug=1, coldwave_samples=coldwave_samples)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization(country=test_country, model_type='CNN', data_aug=1, coldwave_samples=coldwave_samples)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('NBEATS: ')
-    mae, rmse = results_visualization_nbeats(country=test_country, data_aug=0)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization_nbeats(country=test_country, data_aug=0)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('ImpactNet: ')
-    mae, rmse = results_visualization_impactnet(country=test_country, data_aug=0)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization_impactnet(country=test_country, data_aug=0)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('Informer: ')
-    mae, rmse = results_visualization_informer(country=test_country, data_aug=0)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization_informer(country=test_country, data_aug=0)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     print('Autoformer: ')
-    mae, rmse = results_visualization_autoformer(country=test_country, data_aug=0)
-    resuts_list.append(mae)
-    resuts_list.append(rmse)
+    #mae, rmse = results_visualization_autoformer(country=test_country, data_aug=0)
+    #resuts_list.append(mae)
+    #resuts_list.append(rmse)
 
     return resuts_list
 
@@ -1349,7 +1351,7 @@ test_country_list = ['Belgium', 'Croatia', 'Denmark', 'Finland', 'France',
                       'Lithuania', 'Latvia', 'Netherlands', 'Norway',
                       'Poland', 'Romania', 'Slovenia', 'Sweden', 'Switzerland']
 
-
+#test_country_list = ['Ireland']
 
 filename = 'Europe.csv'
 with open(filename, mode='w', newline='', encoding='utf-8') as file:
@@ -1366,9 +1368,23 @@ for test_country in test_country_list:
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(seed)
-    coldwave_samples = generate_coldwave_samples(test_country, num_samples=int(1200*proportion), weather_type='coldwave').cpu().detach().numpy()
+    if augmentation_type == 'extreme_only':
+        coldwave_samples = generate_coldwave_only(test_country, num_samples=int(1200 * proportion),
+                                                     weather_type='coldwave').cpu().detach().numpy()
+    elif augmentation_type == 'smote':
+        coldwave_samples = generate_smote_with_noise(test_country, num_samples=int(1200 * proportion),
+                                                  weather_type='coldwave').cpu().detach().numpy()
+    elif augmentation_type == 'gaussian':
+        coldwave_samples = generate_gaussian(test_country, num_samples=int(1200 * proportion),
+                                                  weather_type='coldwave').cpu().detach().numpy()
+    elif augmentation_type == 'mixup':
+        coldwave_samples = generate_dirichlet_mixup(test_country, num_samples=int(1200 * proportion),
+                                                  weather_type='coldwave').cpu().detach().numpy()
+    else:
+        coldwave_samples = generate_coldwave_samples(test_country, num_samples=int(1200*proportion), weather_type='coldwave').cpu().detach().numpy()
 
     results_list = visualization(test_country, coldwave_samples=coldwave_samples)
+    #results_list = visualization(test_country, coldwave_samples=None)
 
     with open(filename, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)

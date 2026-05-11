@@ -1,6 +1,6 @@
 from tqdm import tqdm
 import torch
-from Dataset_Loader_2D import diff_dataloader
+from Dataset_Loader_2D import diff_dataloader, extreme_dataloader
 from torch.optim import Adam, AdamW, SGD
 from torch.utils.data import DataLoader
 from diff_Model_2D import SDE, VPSDE, sde_loss_fn, VESDE, classifier_fn
@@ -23,7 +23,7 @@ os.environ['PYTHONHASHSEED'] = str(seed)
 device = "cuda:2"
 
 lr = 1e-3
-n_epochs = 1000
+n_epochs = 800
 
 
 def train(sde: SDE, model: Module, loss_fn: Callable, country='Belgium'):
@@ -61,6 +61,46 @@ def train(sde: SDE, model: Module, loss_fn: Callable, country='Belgium'):
 
         if avg_loss <= best_loss:
             torch.save(model.state_dict(), 'Model_parameters/diffusion_model_{}.pt'.format(country))
+            best_loss = avg_loss
+
+    #torch.save(model.state_dict(), 'Model_parameters/diffusion_model_{}.pt'.format(country))
+
+
+def train_extreme(sde: SDE, model: Module, loss_fn: Callable, country='Belgium'):
+    data_loader = extreme_dataloader(country=country)
+    optimizer = Adam(model.parameters(), lr=lr)
+    #optimizer = AdamW(model.parameters(), lr=lr)
+    #optimizer = SGD(model.parameters(), lr=lr)
+    optimizer.zero_grad()
+
+    # train the unconditional diffusion model
+    print('Diffusion model training:')
+    tqdm_epochs = tqdm(range(1, 600 + 1))
+    best_loss = 10000
+
+    for epoch in tqdm_epochs:
+        total_loss = 0.
+        num_samples = 0
+
+        for x, y in data_loader:
+            x = x.to(device)
+            loss = loss_fn(sde, model, x, y)
+            loss.backward()
+
+            optimizer.step()
+            optimizer.zero_grad()
+
+            num_samples += x.size(0)
+            total_loss += loss.item() * x.size(0)
+
+        avg_loss = total_loss / num_samples
+        tqdm_epochs.set_description(
+            f"Epoch:[{epoch}]/[{n_epochs}]; Avg Loss: {avg_loss:5f}; "
+            f"Num Samples: {num_samples}"
+        )
+
+        if avg_loss <= best_loss:
+            torch.save(model.state_dict(), 'Model_parameters/diffusion_model_1_{}.pt'.format(country))
             best_loss = avg_loss
 
     #torch.save(model.state_dict(), 'Model_parameters/diffusion_model_{}.pt'.format(country))
@@ -107,11 +147,10 @@ test_country_list = ['Belgium', 'Croatia', 'Denmark', 'Finland', 'France',
                       'Lithuania', 'Latvia', 'Netherlands', 'Norway',
                       'Poland', 'Romania', 'Slovenia', 'Sweden', 'Switzerland']
 
-#test_country_list = ['France']
+test_country_list = ['Ireland']
 #for country in test_country_list:
 
 #    vp_sde = VESDE(N=1000)
 #    model = ScoreModel(vp_sde.p_0t, in_channel=2).to(device)
+#    model = train_extreme(vp_sde, model, sde_loss_fn, country=country)
 #    model = train(vp_sde, model, sde_loss_fn, country=country)
-
-

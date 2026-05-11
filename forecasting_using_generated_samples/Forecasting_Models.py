@@ -106,6 +106,58 @@ class source_encoder_CNN(Module):
 
         return h2
 
+class source_encoder_convlstm(Module):
+    def __init__(self, input_channels=2, hidden_channels=[32, 64], kernel_size=3, step=7,
+                 effective_step=[j for j in range(7)]):
+        super(source_encoder_convlstm, self).__init__()
+        self.input_channels = [input_channels] + hidden_channels
+        self.hidden_channels = hidden_channels
+        self.kernel_size = kernel_size
+        self.num_layers = len(hidden_channels)
+        self.step = step
+        self.effective_step = effective_step
+        self._all_layers = []
+        self.fc1 = nn.Linear(hidden_channels[-1] * 7 * 24, 64)
+        self.exfc = nn.Linear(24, 64)
+        self.fc2 = nn.Linear(128, 24)
+        for i in range(self.num_layers):  # 定义一个多层的convLSTM（即多个convLSTMCell），并存放在_all_layers列表中
+            name = 'cell{}'.format(i)
+            cell = ConvLSTMCell(self.input_channels[i], self.hidden_channels[i], self.kernel_size)
+            setattr(self, name, cell)
+            self._all_layers.append(cell)
+
+    def forward(self, input, x_ex):
+
+        internal_state = []
+        outputs = []
+        for step in range(self.step):  # 在每一个时步进行前向运算
+            x = input
+            for i in range(self.num_layers):  # 对多层convLSTM中的每一层convLSTMCell，依次进行前向运算
+                # all cells are initialized in the first step
+                name = 'cell{}'.format(i)
+                if step == 0:  # 如果是在第一个时步，则需要调用init_hidden进行convLSTMCell的初始化
+                    bsize, _, height, width = x.size()
+                    (h, c) = getattr(self, name).init_hidden(batch_size=bsize, hidden=self.hidden_channels[i],
+                                                             shape=(height, width))
+                    internal_state.append((h, c))
+
+                # do forward
+                (h, c) = internal_state[i]
+                x, new_c = getattr(self, name)(x, h, c)  # 调用convLSTMCell的forward进行前向运算
+                internal_state[i] = (x, new_c)
+            # only record effective steps
+            if step in self.effective_step:
+                outputs.append(x)
+
+        # print(len(outputs))
+        h1 = outputs[-1]
+        h1 = nn.ReLU()(self.fc1(h1.view(h1.shape[0], -1)))
+        hex = nn.ReLU()(self.exfc(x_ex))
+        h2 = torch.cat((h1, hex), dim=1)
+
+        return h2
+
+
 
 class target_encoder(Module):
     def __init__(self, input_dim=2, hidden_size=64):
@@ -250,7 +302,7 @@ class shared_encoder_LSTM(Module):
         hex = self.exfc1(ex)
         #hex = self.act(hex)
         #h = self.act(self.fc1(h))
-        h = self.fc1(h)
+        #h = self.fc1(h)
         h = torch.cat((h, hex), dim=1)
         #h = self.act(h)
         #h = self.fc4(h)
@@ -301,6 +353,57 @@ class shared_encoder_CNN(Module):
         h2 = torch.cat((h2, hex), dim=1)
 
         # print('h2 shape: ', h2.shape)
+
+        return h2
+
+class shared_encoder_convlstm(Module):
+    def __init__(self, input_channels=2, hidden_channels=[32, 64], kernel_size=3, step=7,
+                 effective_step=[j for j in range(7)]):
+        super(shared_encoder_convlstm, self).__init__()
+        self.input_channels = [input_channels] + hidden_channels
+        self.hidden_channels = hidden_channels
+        self.kernel_size = kernel_size
+        self.num_layers = len(hidden_channels)
+        self.step = step
+        self.effective_step = effective_step
+        self._all_layers = []
+        self.fc1 = nn.Linear(hidden_channels[-1] * 7 * 24, 64)
+        self.exfc = nn.Linear(24, 64)
+        self.fc2 = nn.Linear(128, 24)
+        for i in range(self.num_layers):  # 定义一个多层的convLSTM（即多个convLSTMCell），并存放在_all_layers列表中
+            name = 'cell{}'.format(i)
+            cell = ConvLSTMCell(self.input_channels[i], self.hidden_channels[i], self.kernel_size)
+            setattr(self, name, cell)
+            self._all_layers.append(cell)
+
+    def forward(self, input, x_ex):
+
+        internal_state = []
+        outputs = []
+        for step in range(self.step):  # 在每一个时步进行前向运算
+            x = input
+            for i in range(self.num_layers):  # 对多层convLSTM中的每一层convLSTMCell，依次进行前向运算
+                # all cells are initialized in the first step
+                name = 'cell{}'.format(i)
+                if step == 0:  # 如果是在第一个时步，则需要调用init_hidden进行convLSTMCell的初始化
+                    bsize, _, height, width = x.size()
+                    (h, c) = getattr(self, name).init_hidden(batch_size=bsize, hidden=self.hidden_channels[i],
+                                                             shape=(height, width))
+                    internal_state.append((h, c))
+
+                # do forward
+                (h, c) = internal_state[i]
+                x, new_c = getattr(self, name)(x, h, c)  # 调用convLSTMCell的forward进行前向运算
+                internal_state[i] = (x, new_c)
+            # only record effective steps
+            if step in self.effective_step:
+                outputs.append(x)
+
+        # print(len(outputs))
+        h1 = outputs[-1]
+        h1 = nn.ReLU()(self.fc1(h1.view(h1.shape[0], -1)))
+        hex = nn.ReLU()(self.exfc(x_ex))
+        h2 = torch.cat((h1, hex), dim=1)
 
         return h2
 
@@ -528,18 +631,18 @@ class Separation_network_CNN(Module):
 
 
 def guassian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None):
-    """Calculate Knernel Matrix
-    source: sample_size_1 * feature_size
-    target: sample_size_2 * feature_size
-    kernel_mul: bandwith
-    kernel_num: number of kernels
-    fix_sigma: whether fixed standard deviation
+    """计算Gram/核矩阵
+    source: sample_size_1 * feature_size 的数据
+    target: sample_size_2 * feature_size 的数据
+    kernel_mul: 这个概念不太清楚，感觉也是为了计算每个核的bandwith
+    kernel_num: 表示的是多核的数量
+    fix_sigma: 表示是否使用固定的标准差
 
 		return: [	K_ss K_st
 				K_ts K_tt ]
     """
     n_samples = int(source.size()[0]) + int(target.size()[0])
-    total = torch.cat([source, target], dim=0)  # concatenation
+    total = torch.cat([source, target], dim=0)  # 合并在一起
 
     total0 = total.unsqueeze(0).expand(int(total.size(0)), \
                                        int(total.size(0)), \
@@ -547,9 +650,9 @@ def guassian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None
     total1 = total.unsqueeze(1).expand(int(total.size(0)), \
                                        int(total.size(0)), \
                                        int(total.size(1)))
-    L2_distance = ((total0 - total1) ** 2).sum(2)  # |x-y|
+    L2_distance = ((total0 - total1) ** 2).sum(2)  # 计算高斯核中的|x-y|
 
-    # bandwidth calculation
+    # 计算多核中每个核的bandwidth
     if fix_sigma:
         bandwidth = fix_sigma
     else:
@@ -558,11 +661,11 @@ def guassian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None
     #bandwidth_list = [bandwidth * (kernel_mul ** i) for i in range(kernel_num)]
     bandwidth_list = [float(i+1)**2 for i in range(kernel_num)]
 
-    # exp(-|x-y|/bandwith)
+    # 高斯核的公式，exp(-|x-y|/bandwith)
     kernel_val = [torch.exp(-L2_distance / bandwidth_temp) for \
                   bandwidth_temp in bandwidth_list]
 
-    return sum(kernel_val) 
+    return sum(kernel_val)  # 将多个核合并在一起
 
 def mmd(source, target, kernel_mul=2, kernel_num=5, fix_sigma=5):
     batch_size = int(source.size()[0])
@@ -574,8 +677,8 @@ def mmd(source, target, kernel_mul=2, kernel_num=5, fix_sigma=5):
     YY = kernels[batch_size:, batch_size:]  # Target<->Target
     XY = kernels[:batch_size, batch_size:]  # Source<->Target
     YX = kernels[batch_size:, :batch_size]  # Target<->Source
-    loss = torch.mean(XX + YY - XY - YX)
-
+    loss = torch.mean(XX + YY - XY - YX)  # 这里是假定X和Y的样本数量是相同的
+    # 当不同的时候，就需要乘上上面的M矩阵
     return loss
 
 
@@ -693,8 +796,9 @@ class CNN_Model(nn.Module):
 class NBEATS(nn.Module):
     def __init__(self, block_num=2, stack_num=2, loopback_window=168, future_horizen=24):
         '''
-            loopback_window 
-            future_horizen 
+        参数说明：
+            loopback_window 向前看几个时间点
+            future_horizen 预测未来几个时间点
         '''
         super(NBEATS, self).__init__()
         self.name = 'apps.fmml.NbeatsModel'
@@ -724,14 +828,16 @@ class NBEATS(nn.Module):
 class BasicBlock(nn.Module):
     def __init__(self, loopback_window=168, future_horizen=1):
         '''
-            loopback_window 
-            future_horizen 
+        参数说明：
+            loopback_window 向前看几个时间点
+            future_horizen 预测未来几个时间点
         '''
         super(BasicBlock, self).__init__()
         self.loopback_window = loopback_window
         self.future_horizen = future_horizen
         theta_f_num = 5
         theta_b_num = 5
+        # 组成块的全连接层
         fc_layers = [64, 64, 64, 64]
         self.h1 = nn.Linear(loopback_window, fc_layers[0])
         self.h2 = nn.Linear(fc_layers[0], fc_layers[1])
@@ -787,7 +893,11 @@ class BlockStack(nn.Module):
 # Impactnet
 class RCU_block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
-
+        '''
+        参数说明：
+            loopback_window 向前看几个时间点
+            future_horizen 预测未来几个时间点
+        '''
         super(RCU_block, self).__init__()
         self.conv1 = nn.Conv1d(in_channels, out_channels, 3, stride=1, padding=1)
         self.relu = nn.ReLU()
@@ -808,7 +918,11 @@ class RCU_block(nn.Module):
 
 class impactnet(nn.Module):
     def __init__(self, feature_size=24, out_channels=64, kernel_size=5, stride=1):
-
+        '''
+        参数说明：
+            loopback_window 向前看几个时间点
+            future_horizen 预测未来几个时间点
+        '''
         super(impactnet, self).__init__()
         self.gru1 = RCU_block(2, out_channels, kernel_size, stride=stride)
         self.gru2 = RCU_block(out_channels, out_channels, kernel_size, stride=stride)
@@ -849,7 +963,108 @@ class impactnet(nn.Module):
 
 
 
+class ConvLSTM(nn.Module):
+    def __init__(self, input_channels=2, hidden_channels=[32, 64], kernel_size=3, step=7, effective_step=[j for j in range(7)]):
+        super(ConvLSTM, self).__init__()
+        self.input_channels = [input_channels] + hidden_channels
+        self.hidden_channels = hidden_channels
+        self.kernel_size = kernel_size
+        self.num_layers = len(hidden_channels)
+        self.step = step
+        self.effective_step = effective_step
+        self._all_layers = []
+        self.fc1 = nn.Linear(hidden_channels[-1]*7*24, 128)
+        self.exfc = nn.Linear(24, 128)
+        self.fc2 = nn.Linear(256, 24)
+        for i in range(self.num_layers):        # 定义一个多层的convLSTM（即多个convLSTMCell），并存放在_all_layers列表中
+            name = 'cell{}'.format(i)
+            cell = ConvLSTMCell(self.input_channels[i], self.hidden_channels[i], self.kernel_size)
+            setattr(self, name, cell)
+            self._all_layers.append(cell)
 
+    def forward(self, input, x_ex):
+
+        internal_state = []
+        outputs = []
+        for step in range(self.step):  # 在每一个时步进行前向运算
+            x = input
+            for i in range(self.num_layers):  # 对多层convLSTM中的每一层convLSTMCell，依次进行前向运算
+                # all cells are initialized in the first step
+                name = 'cell{}'.format(i)
+                if step == 0:  # 如果是在第一个时步，则需要调用init_hidden进行convLSTMCell的初始化
+                    bsize, _, height, width = x.size()
+                    (h, c) = getattr(self, name).init_hidden(batch_size=bsize, hidden=self.hidden_channels[i],
+                                                             shape=(height, width))
+                    internal_state.append((h, c))
+
+                # do forward
+                (h, c) = internal_state[i]
+                x, new_c = getattr(self, name)(x, h, c)  # 调用convLSTMCell的forward进行前向运算
+                internal_state[i] = (x, new_c)
+            # only record effective steps
+            if step in self.effective_step:
+                outputs.append(x)
+
+        #print(len(outputs))
+        h1 = outputs[-1]
+        h1 = nn.ReLU()(self.fc1(h1.view(h1.shape[0], -1)))
+        hex = nn.ReLU()(self.exfc(x_ex))
+        h2 = self.fc2(torch.cat((h1, hex), dim=1))
+
+        return h2
+
+class ConvLSTMCell(nn.Module):
+    def __init__(self, input_channels, hidden_channels, kernel_size):
+        super(ConvLSTMCell, self).__init__()
+
+        assert hidden_channels % 2 == 0
+
+        self.input_channels = input_channels
+        self.hidden_channels = hidden_channels
+        self.kernel_size = kernel_size
+
+        self.padding = int((kernel_size - 1) / 2)
+
+        self.Wxi = nn.Conv2d(self.input_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=True)
+        self.Whi = nn.Conv2d(self.hidden_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=False)
+        self.Wxf = nn.Conv2d(self.input_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=True)
+        self.Whf = nn.Conv2d(self.hidden_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=False)
+        self.Wxc = nn.Conv2d(self.input_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=True)
+        self.Whc = nn.Conv2d(self.hidden_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=False)
+        self.Wxo = nn.Conv2d(self.input_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=True)
+        self.Who = nn.Conv2d(self.hidden_channels, self.hidden_channels, self.kernel_size, 1, self.padding, bias=False)
+
+        self.Wci = None
+        self.Wcf = None
+        self.Wco = None
+
+    def forward(self, x, h, c):
+        ci = torch.sigmoid(self.Wxi(x) + self.Whi(h) + c * self.Wci)
+        cf = torch.sigmoid(self.Wxf(x) + self.Whf(h) + c * self.Wcf)
+        cc = cf * c + ci * torch.tanh(self.Wxc(x) + self.Whc(h))
+        co = torch.sigmoid(self.Wxo(x) + self.Who(h) + cc * self.Wco)
+        ch = co * torch.tanh(cc)
+        return ch, cc
+
+    def init_hidden(self, batch_size, hidden, shape):
+        if self.Wci is None:
+            self.Wci = Variable(torch.zeros(1, hidden, shape[0], shape[1])).to(device)
+            self.Wcf = Variable(torch.zeros(1, hidden, shape[0], shape[1])).to(device)
+            self.Wco = Variable(torch.zeros(1, hidden, shape[0], shape[1])).to(device)
+        else:
+            assert shape[0] == self.Wci.size()[2], 'Input Height Mismatched!'
+            assert shape[1] == self.Wci.size()[3], 'Input Width Mismatched!'
+        return (Variable(torch.zeros(batch_size, hidden, shape[0], shape[1]).to(device)),
+                Variable(torch.zeros(batch_size, hidden, shape[0], shape[1])).to(device))
+
+
+
+
+#model = ConvLSTM().to(device)
+#inputs = torch.randn((1, 2, 7, 24)).to(device)
+#inputs2 = torch.randn((1, 24)).to(device)
+#outputs = model(inputs, inputs2)
+#print(outputs.shape)
 
 
 
@@ -865,5 +1080,4 @@ class impactnet(nn.Module):
 #inputs_1 = torch.randn((2, 168, 2))
 #inputs_2 = torch.randn((2, 24))
 #outputs = model(inputs_1, inputs_2)
-
 #print(outputs.shape)
