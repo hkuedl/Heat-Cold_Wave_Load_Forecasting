@@ -1,9 +1,6 @@
 import torch
 
 import sys
-print(sys.path)
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Informer')
-sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Autoformer')
 import csv
 
 import pandas as pd
