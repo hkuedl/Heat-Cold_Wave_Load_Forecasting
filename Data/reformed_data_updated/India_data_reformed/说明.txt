@@ -1,0 +1,8 @@
+选取了印度的两个邦（State）的数据
+时间步为1h
+第一列为时间
+第二列为负荷（MW）
+第三列为温度（℃）
+
+负荷数据来源：https://iced.niti.gov.in/energy/electricity/distribution/national-level-consumption/load-curve
+天气数据来源：https://www.renewables.ninja/
