@@ -36,96 +36,249 @@ from matplotlib.lines import Line2D
 
 
 
-## Fig. 1
-def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdong'):
+def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, gadm_file="map_data/gadm41_CHN_2.json",):
+    import numpy as np
     import pandas as pd
-    import geopandas
+    import geopandas as gpd
     import matplotlib.pyplot as plt
-    from geodatasets import get_path
-    plt.rcParams['xtick.direction'] = 'in'
-    plt.rcParams['ytick.direction'] = 'in'
 
+    from matplotlib.colors import Normalize
+    from matplotlib.cm import ScalarMappable
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-    city_name = ['chaozhou', 'dongguan', 'foshan', 'guangzhou', 'heyuan',
-                 'huizhou', 'jiangmen', 'jieyang', 'maoming', 'meizhou',
-                 'qingyuan', 'shantou', 'shanwei', 'shaoguan', 'shenzhen',
-                 'yangjiang', 'yunfu', 'zhanjiang', 'zhaoqing', 'zhongshan',
-                 'zhuhai'
-                 ]
+    plt.rcParams["xtick.direction"] = "in"
+    plt.rcParams["ytick.direction"] = "in"
 
-    city_code = ['445100', '441900', '440600', '440100', '441600',
-                 '441300', '440700', '445200', '440900', '441400',
-                 '441800', '440500', '441500', '440200', '440300',
-                 '441700', '445300', '440800', '441200', '442000',
-                 '440400']
-    fig, ax = plt.subplots(1, 1, figsize=(5.5, 5.5), dpi=90)
-    plt.axis('equal')
-    world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
-    world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
+    city_name = [
+        "chaozhou", "dongguan", "foshan", "guangzhou", "heyuan",
+        "huizhou", "jiangmen", "jieyang", "maoming", "meizhou",
+        "qingyuan", "shantou", "shanwei", "shaoguan", "shenzhen",
+        "yangjiang", "yunfu", "zhanjiang", "zhaoqing", "zhongshan",
+        "zhuhai",
+    ]
 
+    # GADM NAME_2 normally uses title-case English names.
+    city_name_to_gadm = {
+        "chaozhou": "Chaozhou",
+        "dongguan": "Dongguan",
+        "foshan": "Foshan",
+        "guangzhou": "Guangzhou",
+        "heyuan": "Heyuan",
+        "huizhou": "Huizhou",
+        "jiangmen": "Jiangmen",
+        "jieyang": "Jieyang",
+        "maoming": "Maoming",
+        "meizhou": "Meizhou",
+        "qingyuan": "Qingyuan",
+        "shantou": "Shantou",
+        "shanwei": "Shanwei",
+        "shaoguan": "Shaoguan",
+        "shenzhen": "Shenzhen",
+        "yangjiang": "Yangjiang",
+        "yunfu": "Yunfu",
+        "zhanjiang": "Zhanjiang",
+        "zhaoqing": "Zhaoqing",
+        "zhongshan": "Zhongshan",
+        "zhuhai": "Zhuhai",
+    }
 
-    cmap = plt.get_cmap('GnBu')  # 黄-橙-红色标，适用于热力值
-    norm = Normalize(0, 0.5)
-    sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
-    cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
-                        shrink=0.7, pad=0.1, aspect=30)
-    cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    def canonical_city_name(x):
+        x = str(x).lower().strip()
+
+        remove_tokens = [
+            " prefecture-level city",
+            " prefecture level city",
+            " prefecture city",
+            " prefecture",
+            " municipality",
+            " city",
+            " shi",
+            "市",
+        ]
+
+        for token in remove_tokens:
+            x = x.replace(token, "")
+
+        if x.endswith("shi"):
+            x = x[:-3]
+
+        x = x.replace("-", " ")
+        x = x.replace("_", " ")
+        x = " ".join(x.split())
+
+        alias_map = {
+            "chao zhou": "chaozhou",
+            "chaozhou": "chaozhou",
+            "dong guan": "dongguan",
+            "dongguan": "dongguan",
+            "fo shan": "foshan",
+            "foshan": "foshan",
+            "guang zhou": "guangzhou",
+            "guangzhou": "guangzhou",
+            "he yuan": "heyuan",
+            "heyuan": "heyuan",
+            "hui zhou": "huizhou",
+            "huizhou": "huizhou",
+            "jiang men": "jiangmen",
+            "jiangmen": "jiangmen",
+            "jie yang": "jieyang",
+            "jieyang": "jieyang",
+            "mao ming": "maoming",
+            "maoming": "maoming",
+            "mei zhou": "meizhou",
+            "meizhou": "meizhou",
+            "qing yuan": "qingyuan",
+            "qingyuan": "qingyuan",
+            "shan tou": "shantou",
+            "shantou": "shantou",
+            "shan wei": "shanwei",
+            "shanwei": "shanwei",
+            "shao guan": "shaoguan",
+            "shaoguan": "shaoguan",
+            "shen zhen": "shenzhen",
+            "shenzhen": "shenzhen",
+            "yang jiang": "yangjiang",
+            "yangjiang": "yangjiang",
+            "yun fu": "yunfu",
+            "yunfu": "yunfu",
+            "zhan jiang": "zhanjiang",
+            "zhanjiang": "zhanjiang",
+            "zhao qing": "zhaoqing",
+            "zhaoqing": "zhaoqing",
+            "zhong shan": "zhongshan",
+            "zhongshan": "zhongshan",
+            "zhu hai": "zhuhai",
+            "zhuhai": "zhuhai",
+        }
+
+        return alias_map.get(x, x)
+
+    # =========================
+    # 1. Read local GADM file
+    # =========================
+
+    gadm = gpd.read_file(gadm_file)
+
+    print("GADM columns:")
+    print(gadm.columns.tolist())
+
+    if "NAME_1" not in gadm.columns or "NAME_2" not in gadm.columns:
+        raise ValueError("The GADM file should contain NAME_1 and NAME_2 columns.")
+
+    guangdong = gadm[
+        gadm["NAME_1"].astype(str).str.lower().str.strip() == "guangdong"
+    ].copy()
+
+    if guangdong.empty:
+        print("Available NAME_1 values:")
+        print(sorted(gadm["NAME_1"].dropna().unique()))
+        raise ValueError("Cannot find Guangdong in NAME_1.")
+
+    guangdong["city_key"] = guangdong["NAME_2"].apply(canonical_city_name)
+
+    print("\nGADM Guangdong city matching:")
+    print(
+        guangdong[["NAME_1", "NAME_2", "city_key"]]
+        .sort_values("city_key")
+        .to_string(index=False)
+    )
+
+    # Some GADM versions may contain multiple polygons for one city.
+    guangdong = guangdong.dissolve(by="city_key", as_index=False)
+
+    # =========================
+    # 2. Compute city ratios
+    # =========================
 
     common_load_norm = []
     hotwave_load_norm = []
     coldwave_load_norm = []
+
     common_tem_norm = []
     hotwave_tem_norm = []
     coldwave_tem_norm = []
-    for i in range(len(city_code)):
-        data = pd.read_excel('../Data/reformed_data_updated/GuangDong_data_reformed/{}.xlsx'.format(city_name[i]))
 
-        strat_time = '2020/01/01/00'
-        end_time = '2022/12/31/23'
-        start_date = pd.to_datetime(strat_time)  ## Thursday
+    ratio_by_city = {}
+
+    for i, city in enumerate(city_name):
+        print(f"Processing {i + 1}/{len(city_name)}: {city}")
+
+        data_file = (
+            "../Data/reformed_data_updated/"
+            f"GuangDong_data_reformed/{city}.xlsx"
+        )
+
+        data = pd.read_excel(data_file)
+
+        start_time = "2020/01/01/00"
+        end_time = "2022/12/31/23"
+
+        start_date = pd.to_datetime(start_time)
         end_date = pd.to_datetime(end_time)
 
-        data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+        data["Data_Hour"] = pd.to_datetime(data["Data_Hour"])
 
-        load = np.array(data['Load'])
-        temperature = np.array(data['Temperature'])
+        data = data[
+            (data["Data_Hour"] >= start_date)
+            & (data["Data_Hour"] <= end_date)
+        ].copy()
 
-        norm_load = (load - min(load)) / (max(load) - min(load))
-        norm_tem = (temperature - min(temperature)) / (max(temperature) - min(temperature))
+        load = np.array(data["Load"], dtype=float)
+        temperature = np.array(data["Temperature"], dtype=float)
 
-        T_i_list = np.array([(np.max(temperature[24 * i:24 * (i + 1)]) +
-                              np.min(temperature[24 * i:24 * (i + 1)])) / 2
-                             for i in range(temperature.shape[0] // 24)])
+        if len(load) < 24 * 70:
+            print(f"Warning: {city} has too few hourly records.")
+            ratio_by_city[city] = np.nan
+            continue
+
+        load_range = np.max(load) - np.min(load)
+        temp_range = np.max(temperature) - np.min(temperature)
+
+        if load_range == 0 or temp_range == 0:
+            print(f"Warning: {city} has zero load or temperature range.")
+            ratio_by_city[city] = np.nan
+            continue
+
+        norm_load = (load - np.min(load)) / load_range
+        norm_tem = (temperature - np.min(temperature)) / temp_range
+
+        n_days = temperature.shape[0] // 24
+
+        T_i_list = np.array([
+            (
+                np.max(temperature[24 * d: 24 * (d + 1)])
+                + np.min(temperature[24 * d: 24 * (d + 1)])
+            ) / 2
+            for d in range(n_days)
+        ])
+
         T_05 = np.percentile(T_i_list, 5)
         T_95 = np.percentile(T_i_list, 95)
 
-        # load and temperature slices formulation
         coldwave_index = []
         hotwave_index = []
+
         common_load_mean = []
         hotwave_load_mean = []
         coldwave_load_mean = []
 
-
+        # Keep the same time-window logic as your original code.
         for j in range(30, load.shape[0] // 24 - 3 - 30 - 6):
-
-            ## define the cold wave index
             ECI_sig = np.mean(T_i_list[j:j + 3]) - T_05
             ECI_accl = np.mean(T_i_list[j:j + 3]) - np.mean(T_i_list[j - 30:j])
             ECF = min(0, -ECI_sig * min(-1, ECI_accl))
+
             coldwave_index.append(float(ECF < 0))
+
             if ECF < 0:
                 coldwave_load_mean.append(load[24 * j: 24 * (j + 1)])
                 coldwave_load_norm.append(norm_load[24 * j: 24 * (j + 1)])
                 coldwave_tem_norm.append(norm_tem[24 * j: 24 * (j + 1)])
 
-            ## define the hot wave index
             EHI_sig = np.mean(T_i_list[j:j + 3]) - T_95
             EHI_accl = np.mean(T_i_list[j:j + 3]) - np.mean(T_i_list[j - 30:j])
             EHF = max(0, EHI_sig * max(1, EHI_accl))
+
             hotwave_index.append(float(EHF > 0))
 
             if EHF > 0:
@@ -138,313 +291,678 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
                 common_load_norm.append(norm_load[24 * j: 24 * (j + 1)])
                 common_tem_norm.append(norm_tem[24 * j: 24 * (j + 1)])
 
+        if len(hotwave_load_mean) == 0 or len(common_load_mean) == 0:
+            print(f"Warning: {city} has no hotwave or common samples.")
+            ratio_by_city[city] = np.nan
+            continue
 
-        hot_common_ratio = np.mean(hotwave_load_mean)/np.mean(common_load_mean)-1
-        color = cmap(norm(hot_common_ratio))
+        hot_common_ratio = (
+            np.mean(hotwave_load_mean) / np.mean(common_load_mean) - 1
+        )
+
+        ratio_by_city[city] = hot_common_ratio
+
+    print("\nHot-common ratio by city:")
+    for city, value in ratio_by_city.items():
+        print(f"{city}: {value}")
+
+    # =========================
+    # 3. Merge ratios into map
+    # =========================
+
+    guangdong["hot_common_ratio"] = guangdong["city_key"].map(ratio_by_city)
+
+    missing_ratio = guangdong[
+        guangdong["hot_common_ratio"].isna()
+    ]["city_key"].tolist()
+
+    if missing_ratio:
+        print("\nWarning: cities without ratio values:")
+        print(missing_ratio)
+
+    print("\nFinal map data:")
+    print(
+        guangdong[["city_key", "hot_common_ratio"]]
+        .sort_values("city_key")
+        .to_string(index=False)
+    )
+
+    # =========================
+    # 4. Plot map
+    # =========================
+
+    fig, ax = plt.subplots(1, 1, figsize=(5.5, 5.5), dpi=90)
+    world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
+    world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
+
+    cmap = plt.get_cmap("GnBu")
+    norm = Normalize(0, 0.5)
+
+    guangdong.plot(
+        ax=ax,
+        column="hot_common_ratio",
+        cmap=cmap,
+        norm=norm,
+        edgecolor="white",
+        linewidth=0.8,
+        missing_kwds={
+            "color": "lightgray",
+            "label": "No data",
+        },
+    )
 
 
+    sm = ScalarMappable(norm=norm, cmap=cmap)
+    sm.set_array([])
 
-        print(i)
-        guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
+    cbar = plt.colorbar(
+        sm,
+        ax=ax,
+        orientation="horizontal",
+        shrink=0.7,
+        pad=0.1,
+        aspect=30,
+    )
 
-        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
+    cbar.set_label(
+        "Load Increase Ratio in Heatwave Periods",
+        fontsize=labelsize,
+    )
+    cbar.ax.tick_params(labelsize=ticksize)
+
+    # =========================
+    # 5. Inset: load pattern
+    # =========================
 
     ax_inset = inset_axes(
         ax,
-        width="100%", height="100%",
-        #loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
-        borderpad=0
+        width="100%",
+        height="100%",
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),
+        bbox_transform=ax.transAxes,
+        borderpad=0,
     )
 
-    ax_inset.plot(np.mean(np.array(hotwave_load_norm), axis=0), marker='s', markevery=2,
-                      markerfacecolor='white', color='crimson')
+    if len(hotwave_load_norm) > 0:
+        ax_inset.plot(
+            np.mean(np.array(hotwave_load_norm), axis=0),
+            marker="s",
+            markevery=2,
+            markerfacecolor="white",
+            color="crimson",
+        )
 
-    ax_inset.plot(np.mean(np.array(common_load_norm), axis=0), marker='o', markevery=2,
-                      markerfacecolor='white', color='black')
+    if len(common_load_norm) > 0:
+        ax_inset.plot(
+            np.mean(np.array(common_load_norm), axis=0),
+            marker="o",
+            markevery=2,
+            markerfacecolor="white",
+            color="black",
+        )
+
+    ax_inset.set_yticks([0.5, 1])
+    ax_inset.xaxis.set_tick_params(labelsize=ticksize)
+    ax_inset.yaxis.set_tick_params(labelsize=ticksize)
+    ax_inset.set_title("Load Pattern", fontsize=labelsize)
+    ax_inset.set_xlabel("Time Index [hour]", fontsize=labelsize)
+    ax_inset.set_ylabel("Norm. Load", fontsize=labelsize)
+
+    # =========================
+    # 6. Inset: temperature distribution
+    # =========================
 
     ax_inset_2 = inset_axes(
         ax,
-        width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
-        borderpad=0
+        width="100%",
+        height="100%",
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),
+        bbox_transform=ax.transAxes,
+        borderpad=0,
     )
 
+    bins = np.linspace(0, 1, 100)
 
+    if len(hotwave_tem_norm) > 0 and len(common_tem_norm) > 0:
+        counts_hotwave, bin_edges = np.histogram(
+            np.mean(np.array(hotwave_tem_norm), axis=1),
+            bins=bins,
+        )
 
-    bins = np.linspace(
-        0,
-        1,
-        100  # 分箱数量
-    )
+        counts_common, _ = np.histogram(
+            np.mean(np.array(common_tem_norm), axis=1),
+            bins=bin_edges,
+        )
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
-    counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+        ax_inset_2.bar(
+            x=bin_edges[:-1],
+            height=counts_common,
+            width=np.diff(bin_edges),
+            align="edge",
+            color="grey",
+            alpha=0.7,
+            linewidth=1,
+            label="Common Scenario",
+        )
 
-    ax_inset_2.bar(
-        x=bin_edges[:-1],
-        height=counts_common,
-        width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
-        align='edge',
-        color='grey',
-        alpha=0.7,
-        linewidth=1,
-        label='Hotwave Scenario'
-    )
+        ax_inset_2.bar(
+            x=bin_edges[:-1],
+            height=counts_hotwave,
+            width=np.diff(bin_edges),
+            align="edge",
+            color="salmon",
+            alpha=1,
+            linewidth=1,
+            label="Hotwave Scenario",
+        )
 
-    ax_inset_2.bar(
-      x=bin_edges[:-1],  # 分箱左边界
-      height=counts_hotwave,
-      width=np.diff(bin_edges),  # 分箱宽度
-      align='edge',  # 柱子对齐分箱边缘
-      color='salmon',
-      alpha=1,
-      linewidth=1,
-      label='Common Scenario'
-      )
-
-
-
-    ax_inset_2.set_xlabel('Norm. Tem.', fontsize=labelsize)
-    ax_inset_2.set_ylabel('Density', fontsize=labelsize)
+    ax_inset_2.set_xlabel("Norm. Tem.", fontsize=labelsize)
+    ax_inset_2.set_ylabel("Density", fontsize=labelsize)
     ax_inset_2.set_yticks([])
-    ax_inset_2.set_title('Sample Distribution', fontsize=labelsize)
+    ax_inset_2.set_title("Sample Distribution", fontsize=labelsize)
     ax_inset_2.xaxis.set_tick_params(labelsize=ticksize)
+    ax_inset_2.yaxis.set_tick_params(labelsize=ticksize)
 
-
+    # =========================
+    # 7. Axis style and save
+    # =========================
 
     ax.set_yticks([20, 22, 24, 26])
     ax.set_xticks([110, 112, 114, 116, 118])
-    ax.set_xticklabels(['110°E', '112°E', '114°E', '116°E', '118°E'])
-    ax.set_yticklabels(['20°N', '22°N', '24°N', '26°N'])
 
+    ax.set_xticklabels(
+        ["110°E", "112°E", "114°E", "116°E", "118°E"],
+        fontsize=ticksize,
+    )
 
+    ax.set_yticklabels(
+        ["20°N", "22°N", "24°N", "26°N"],
+        fontsize=ticksize,
+    )
 
-
-    ax_inset.set_yticks([0.5, 1])
     ax.xaxis.set_tick_params(labelsize=ticksize)
     ax.yaxis.set_tick_params(labelsize=ticksize)
-    ax_inset.xaxis.set_tick_params(labelsize=ticksize)
-    ax_inset.yaxis.set_tick_params(labelsize=ticksize)
-    ax_inset.set_title('Load Pattern', fontsize=labelsize)
-    ax_inset.set_xlabel('Time Index [hour]', fontsize=labelsize)
-    ax_inset.set_ylabel('Norm. Load', fontsize=labelsize)
-
 
     ax.set_xlim(109, 119)
     ax.set_ylim(19, 26)
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
     ax.set_title("Heatwave in Guangdong", fontsize=titlesize)
+
     plt.tight_layout()
 
-    #plt.axis('equal')
-    #plt.show()
-
+    #fig.savefig(f"figures/load_change_in_{region}.pdf", bbox_inches="tight")
+    #fig.savefig(f"figures/load_change_in_{region}.svg", bbox_inches="tight")
     fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
-    fig.show()
+
+    plt.show()
+
 
 #plot_guangdong_map()
 
-def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
+def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, gadm_file="map_data/gadm41_CHN_2.json",):
+    import numpy as np
     import pandas as pd
-    import geopandas
+    import geopandas as gpd
     import matplotlib.pyplot as plt
-    from geodatasets import get_path
 
-    city_name = ['娄底', '岳阳', '常德', '张家界', '怀化', '株洲',
-                 '永州', '湘潭', '湘西', '益阳', '衡阳', '邵阳', '郴州', '长沙']
+    from matplotlib.colors import Normalize
+    from matplotlib.cm import ScalarMappable
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-    city_code = ['431300', '430600', '430700', '430800', '431200',
-                 '430200', '431100', '430300', '433100', '430900',
-                 '430400', '430500', '431000', '430100']
+    plt.rcParams["xtick.direction"] = "in"
+    plt.rcParams["ytick.direction"] = "in"
 
-    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=90)
-    world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
-    world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
+    city_name = [
+        "娄底", "岳阳", "常德", "张家界", "怀化", "株洲",
+        "永州", "湘潭", "湘西", "益阳", "衡阳", "邵阳",
+        "郴州", "长沙",
+    ]
 
+    # 用于匹配 GADM 的 NAME_2。
+    city_name_to_key = {
+        "娄底": "loudi",
+        "岳阳": "yueyang",
+        "常德": "changde",
+        "张家界": "zhangjiajie",
+        "怀化": "huaihua",
+        "株洲": "zhuzhou",
+        "永州": "yongzhou",
+        "湘潭": "xiangtan",
+        "湘西": "xiangxi",
+        "益阳": "yiyang",
+        "衡阳": "hengyang",
+        "邵阳": "shaoyang",
+        "郴州": "chenzhou",
+        "长沙": "changsha",
+    }
 
-    cmap = plt.get_cmap('RdPu')  # 黄-橙-红色标，适用于热力值
-    norm = Normalize(0, 0.5)
-    sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  # 必须设置一个空数组
-    cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
-                        shrink=0.7, pad=0.1, aspect=30)
-    cbar.set_label('Load Increase Ratio in Coldwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
+    def canonical_city_name(x):
+        x = str(x).lower().strip()
+
+        remove_tokens = [
+            " tujia and miao autonomous prefecture",
+            " autonomous prefecture",
+            " prefecture-level city",
+            " prefecture level city",
+            " prefecture city",
+            " prefecture",
+            " municipality",
+            " city",
+            " shi",
+            "市",
+        ]
+
+        for token in remove_tokens:
+            x = x.replace(token, "")
+
+        if x.endswith("shi"):
+            x = x[:-3]
+
+        x = x.replace("-", " ")
+        x = x.replace("_", " ")
+        x = " ".join(x.split())
+
+        alias_map = {
+            "chang de": "changde",
+            "changde": "changde",
+            "chang sha": "changsha",
+            "changsha": "changsha",
+            "chen zhou": "chenzhou",
+            "chenzhou": "chenzhou",
+            "heng yang": "hengyang",
+            "hengyang": "hengyang",
+            "huai hua": "huaihua",
+            "huaihua": "huaihua",
+            "lou di": "loudi",
+            "loudi": "loudi",
+            "shao yang": "shaoyang",
+            "shaoyang": "shaoyang",
+            "xiang tan": "xiangtan",
+            "xiangtan": "xiangtan",
+            "xiangxi": "xiangxi",
+            "xiang xi": "xiangxi",
+            "xiangxi tujia and miao": "xiangxi",
+            "xiangxi tujia miao": "xiangxi",
+            'xiangxitujiaandmiao': "xiangxi",
+            "yiyang": "yiyang",
+            "yi yang": "yiyang",
+            "yong zhou": "yongzhou",
+            "yongzhou": "yongzhou",
+            "yue yang": "yueyang",
+            "yueyang": "yueyang",
+            "zhang jia jie": "zhangjiajie",
+            "zhangjiajie": "zhangjiajie",
+            "zhu zhou": "zhuzhou",
+            "zhuzhou": "zhuzhou",
+        }
+
+        return alias_map.get(x, x)
+
+    # =========================
+    # 1. Read local GADM file
+    # =========================
+
+    gadm = gpd.read_file(gadm_file)
+
+    print("GADM columns:")
+    print(gadm.columns.tolist())
+
+    if "NAME_1" not in gadm.columns or "NAME_2" not in gadm.columns:
+        raise ValueError("The GADM file should contain NAME_1 and NAME_2 columns.")
+
+    hunan = gadm[
+        gadm["NAME_1"].astype(str).str.lower().str.strip() == "hunan"
+    ].copy()
+
+    if hunan.empty:
+        print("Available NAME_1 values:")
+        print(sorted(gadm["NAME_1"].dropna().unique()))
+        raise ValueError("Cannot find Hunan in NAME_1.")
+
+    hunan["city_key"] = hunan["NAME_2"].apply(canonical_city_name)
+
+    print("\nGADM Hunan city matching:")
+    print(
+        hunan[["NAME_1", "NAME_2", "city_key"]]
+        .sort_values("city_key")
+        .to_string(index=False)
+    )
+
+    # 有些 GADM 版本可能一个城市包含多个 polygon，这里合并为一个地级市。
+    hunan = hunan.dissolve(by="city_key", as_index=False)
+
+    # =========================
+    # 2. Compute city ratios
+    # =========================
 
     common_load_norm = []
     hotwave_load_norm = []
     coldwave_load_norm = []
-    coldwave_tem_norm = []
-    common_tem_norm = []
-    for i in range(len(city_code)):
-        data = pd.read_csv('../Data/reformed_data_updated/hunan_data_reformed/{}.csv'.format(city_name[i]), header=0, usecols=['Date', 'load', 'temp'])
 
-        strat_time = '2021/01/01/00'
-        end_time = '2023/10/30/23'
-        start_date = pd.to_datetime(strat_time)  ## Thursday
+    common_tem_norm = []
+    hotwave_tem_norm = []
+    coldwave_tem_norm = []
+
+    ratio_by_city = {}
+
+    for i, city_cn in enumerate(city_name):
+        city_key = city_name_to_key[city_cn]
+
+        print(f"Processing {i + 1}/{len(city_name)}: {city_cn} -> {city_key}")
+
+        data_file = (
+            "../Data/reformed_data_updated/"
+            f"hunan_data_reformed/{city_cn}.csv"
+        )
+
+        data = pd.read_csv(
+            data_file,
+            header=0,
+            usecols=["Date", "load", "temp"],
+        )
+
+        start_time = "2021/01/01/00"
+        end_time = "2023/10/30/23"
+
+        start_date = pd.to_datetime(start_time)
         end_date = pd.to_datetime(end_time)
 
-        data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
+        data["Date"] = pd.to_datetime(data["Date"])
 
-        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
-        # data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
-        # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
-        load = np.array(data['load'])
-        temperature = np.array(data['temp'])
+        data = data[
+            (data["Date"] >= start_date)
+            & (data["Date"] <= end_date)
+        ].copy()
 
+        load = np.array(data["load"], dtype=float)
+        temperature = np.array(data["temp"], dtype=float)
 
-        norm_load = (load-min(load))/(max(load)-min(load))
-        norm_tem = (temperature - min(temperature)) / (max(temperature) - min(temperature))
+        if len(load) < 24 * 70:
+            print(f"Warning: {city_cn} has too few hourly records.")
+            ratio_by_city[city_key] = np.nan
+            continue
 
+        load_range = np.max(load) - np.min(load)
+        temp_range = np.max(temperature) - np.min(temperature)
 
+        if load_range == 0 or temp_range == 0:
+            print(f"Warning: {city_cn} has zero load or temperature range.")
+            ratio_by_city[city_key] = np.nan
+            continue
 
-        T_i_list = np.array([(np.max(temperature[24 * i:24 * (i + 1)]) +
-                              np.min(temperature[24 * i:24 * (i + 1)])) / 2
-                             for i in range(temperature.shape[0] // 24)])
+        norm_load = (load - np.min(load)) / load_range
+        norm_tem = (temperature - np.min(temperature)) / temp_range
+
+        n_days = temperature.shape[0] // 24
+
+        T_i_list = np.array([
+            (
+                np.max(temperature[24 * d: 24 * (d + 1)])
+                + np.min(temperature[24 * d: 24 * (d + 1)])
+            ) / 2
+            for d in range(n_days)
+        ])
+
         T_05 = np.percentile(T_i_list, 5)
         T_95 = np.percentile(T_i_list, 95)
 
-        # load and temperature slices formulation
         coldwave_index = []
         hotwave_index = []
+
         common_load_mean = []
         hotwave_load_mean = []
         coldwave_load_mean = []
 
-
+        # 保持你原来的 heatwave/coldwave 判定窗口。
         for j in range(30, load.shape[0] // 24 - 3 - 30 - 6):
-
-            ## define the cold wave index
+            # Coldwave index
             ECI_sig = np.mean(T_i_list[j:j + 3]) - T_05
             ECI_accl = np.mean(T_i_list[j:j + 3]) - np.mean(T_i_list[j - 30:j])
             ECF = min(0, -ECI_sig * min(-1, ECI_accl))
+
             coldwave_index.append(float(ECF < 0))
+
             if ECF < 0:
-                coldwave_load_mean.append(load[24 * j : 24 * (j + 1)])
+                coldwave_load_mean.append(load[24 * j: 24 * (j + 1)])
                 coldwave_load_norm.append(norm_load[24 * j: 24 * (j + 1)])
                 coldwave_tem_norm.append(norm_tem[24 * j: 24 * (j + 1)])
 
-            ## define the hot wave index
+            # Heatwave index
             EHI_sig = np.mean(T_i_list[j:j + 3]) - T_95
             EHI_accl = np.mean(T_i_list[j:j + 3]) - np.mean(T_i_list[j - 30:j])
             EHF = max(0, EHI_sig * max(1, EHI_accl))
+
             hotwave_index.append(float(EHF > 0))
 
             if EHF > 0:
-                hotwave_load_mean.append(load[24 * j : 24 * (j + 1)])
+                hotwave_load_mean.append(load[24 * j: 24 * (j + 1)])
                 hotwave_load_norm.append(norm_load[24 * j: 24 * (j + 1)])
+                hotwave_tem_norm.append(norm_tem[24 * j: 24 * (j + 1)])
 
             if ECF == 0 and EHF == 0:
-                common_load_mean.append(load[24 * j : 24 * (j + 1)])
+                common_load_mean.append(load[24 * j: 24 * (j + 1)])
                 common_load_norm.append(norm_load[24 * j: 24 * (j + 1)])
                 common_tem_norm.append(norm_tem[24 * j: 24 * (j + 1)])
 
-        hot_common_ratio = np.mean(hotwave_load_mean)/np.mean(common_load_mean)-1
-        color = cmap(norm(hot_common_ratio))
+        if len(coldwave_load_mean) == 0 or len(common_load_mean) == 0:
+            print(f"Warning: {city_cn} has no coldwave or common samples.")
+            ratio_by_city[city_key] = np.nan
+            continue
 
-        print(i)
-        guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
+        cold_common_ratio = (
+            np.mean(coldwave_load_mean) / np.mean(common_load_mean) - 1
+        )
 
-        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
+        ratio_by_city[city_key] = cold_common_ratio
+
+    print("\nCold-common ratio by city:")
+    for city_key, value in ratio_by_city.items():
+        print(f"{city_key}: {value}")
+
+    # =========================
+    # 3. Merge ratios into map
+    # =========================
+
+    hunan["cold_common_ratio"] = hunan["city_key"].map(ratio_by_city)
+
+    missing_ratio = hunan[
+        hunan["cold_common_ratio"].isna()
+    ]["city_key"].tolist()
+
+    if missing_ratio:
+        print("\nWarning: cities without ratio values:")
+        print(missing_ratio)
+
+    print("\nFinal map data:")
+    print(
+        hunan[["city_key", "cold_common_ratio"]]
+        .sort_values("city_key")
+        .to_string(index=False)
+    )
+
+    # =========================
+    # 4. Plot map
+    # =========================
+
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=90)
+
+    cmap = plt.get_cmap("RdPu")
+    norm = Normalize(0, 0.5)
+
+    # 先画填色，不画边界。
+    hunan.plot(
+        ax=ax,
+        column="cold_common_ratio",
+        cmap=cmap,
+        norm=norm,
+        edgecolor="none",
+        linewidth=0,
+        missing_kwds={
+            "color": "lightgray",
+            "edgecolor": "none",
+            "label": "No data",
+        },
+    )
+
+    # 再单独叠加白色市级边界，linewidth 可调。
+    hunan.boundary.plot(
+        ax=ax,
+        color="white",
+        linewidth=1.2,
+    )
+
+    sm = ScalarMappable(norm=norm, cmap=cmap)
+    sm.set_array([])
+
+    cbar = plt.colorbar(
+        sm,
+        ax=ax,
+        orientation="horizontal",
+        shrink=0.7,
+        pad=0.1,
+        aspect=30,
+    )
+
+    cbar.set_label(
+        "Load Increase Ratio in Coldwave Periods",
+        fontsize=labelsize,
+    )
+    cbar.ax.tick_params(labelsize=ticksize)
+
+    # =========================
+    # 5. Inset: load pattern
+    # =========================
 
     ax_inset = inset_axes(
         ax,
-        width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
-        borderpad=0
+        width="100%",
+        height="100%",
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),
+        bbox_transform=ax.transAxes,
+        borderpad=0,
     )
 
-    ax_inset.plot(np.mean(np.array(hotwave_load_norm), axis=0), marker='s', markevery=2,
-                      markerfacecolor='white', color='crimson')
+    if len(coldwave_load_norm) > 0:
+        ax_inset.plot(
+            np.mean(np.array(coldwave_load_norm), axis=0),
+            marker="s",
+            markevery=2,
+            markerfacecolor="white",
+            color="royalblue",
+            label="Coldwave",
+        )
 
-    ax_inset.plot(np.mean(np.array(common_load_norm), axis=0), marker='o', markevery=2,
-                      markerfacecolor='white', color='black')
+    if len(common_load_norm) > 0:
+        ax_inset.plot(
+            np.mean(np.array(common_load_norm), axis=0),
+            marker="o",
+            markevery=2,
+            markerfacecolor="white",
+            color="black",
+            label="Common",
+        )
+
+    ax_inset.set_yticks([0.5, 1])
+    ax_inset.xaxis.set_tick_params(labelsize=ticksize)
+    ax_inset.yaxis.set_tick_params(labelsize=ticksize)
+    ax_inset.set_title("Load Pattern", fontsize=labelsize)
+    ax_inset.set_xlabel("Time Index [hour]", fontsize=labelsize)
+    ax_inset.set_ylabel("Norm. Load", fontsize=labelsize)
+
+    # =========================
+    # 6. Inset: temperature distribution
+    # =========================
 
     ax_inset_2 = inset_axes(
         ax,
-        width="100%", height="100%",
-        # loc="lower right",  # 小图的锚点位置
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
-        bbox_transform=ax.transAxes,  # 使用主图坐标系
-        borderpad=0
+        width="100%",
+        height="100%",
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),
+        bbox_transform=ax.transAxes,
+        borderpad=0,
     )
 
-    bins = np.linspace(
-        0,
-        1,
-        100  # 分箱数量
-    )
+    bins = np.linspace(0, 1, 100)
 
-    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
-    counts_hotwave, bin_edges = np.histogram(np.mean(np.array(coldwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
+    if len(coldwave_tem_norm) > 0 and len(common_tem_norm) > 0:
+        counts_coldwave, bin_edges = np.histogram(
+            np.mean(np.array(coldwave_tem_norm), axis=1),
+            bins=bins,
+        )
 
-    ax_inset_2.bar(
-        x=bin_edges[:-1],
-        height=counts_common,
-        width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
-        align='edge',
-        color='grey',
-        alpha=0.7,
-        linewidth=1,
-        label='Hotwave Scenario'
-    )
+        counts_common, _ = np.histogram(
+            np.mean(np.array(common_tem_norm), axis=1),
+            bins=bin_edges,
+        )
 
-    ax_inset_2.bar(
-        x=bin_edges[:-1],  # 分箱左边界
-        height=counts_hotwave,
-        width=np.diff(bin_edges),  # 分箱宽度
-        align='edge',  # 柱子对齐分箱边缘
-        color='salmon',
-        alpha=1,
-        linewidth=1,
-        label='Common Scenario'
-    )
+        ax_inset_2.bar(
+            x=bin_edges[:-1],
+            height=counts_common,
+            width=np.diff(bin_edges),
+            align="edge",
+            color="grey",
+            alpha=0.7,
+            linewidth=1,
+            label="Common Scenario",
+        )
 
-    ax_inset_2.set_xlabel('Norm. Tem.', fontsize=labelsize)
-    ax_inset_2.set_ylabel('Density', fontsize=labelsize)
+        ax_inset_2.bar(
+            x=bin_edges[:-1],
+            height=counts_coldwave,
+            width=np.diff(bin_edges),
+            align="edge",
+            color="cornflowerblue",
+            alpha=1,
+            linewidth=1,
+            label="Coldwave Scenario",
+        )
+
+    ax_inset_2.set_xlabel("Norm. Tem.", fontsize=labelsize)
+    ax_inset_2.set_ylabel("Density", fontsize=labelsize)
     ax_inset_2.set_yticks([])
-    ax_inset_2.set_title('Sample Distribution', fontsize=labelsize)
+    ax_inset_2.set_title("Sample Distribution", fontsize=labelsize)
     ax_inset_2.xaxis.set_tick_params(labelsize=ticksize)
+    ax_inset_2.yaxis.set_tick_params(labelsize=ticksize)
 
+    # =========================
+    # 7. Axis style and save
+    # =========================
 
-    ax.set_yticks([24, 26, 28, 30, 32, 34])
-    ax.set_xticks([108, 110, 112, 114, 116, 118])
-    ax.set_xticklabels(['108°E', '110°E', '112°E', '114°E', '116°E', '118°E'])
-    ax.set_yticklabels(['24°N', '26°N', '28°N', '30°N', '32°N', '34°N'])
+    ax.set_yticks([24, 26, 28, 30, 32])
+    ax.set_xticks([108, 110, 112, 114, 116])
 
-    ax_inset.set_yticks([0.5, 1])
+    ax.set_xticklabels(
+        ["108°E", "110°E", "112°E", "114°E", "116°E"],
+        fontsize=ticksize,
+    )
+
+    ax.set_yticklabels(
+        ["24°N", "26°N", "28°N", "30°N", "32°N"],
+        fontsize=ticksize,
+    )
+
     ax.xaxis.set_tick_params(labelsize=ticksize)
     ax.yaxis.set_tick_params(labelsize=ticksize)
-    ax_inset.xaxis.set_tick_params(labelsize=ticksize)
-    ax_inset.yaxis.set_tick_params(labelsize=ticksize)
-    ax_inset.set_title('Load Pattern', fontsize=labelsize)
-    ax_inset.set_xlabel('Time Index [hour]', fontsize=labelsize)
-    ax_inset.set_ylabel('Load', fontsize=labelsize)
 
-    ax.set_xlim(108, 118)
-    ax.set_ylim(23, 30)
+    ax.set_xlim(108, 116)
+    ax.set_ylim(24, 31)
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-    # 设置标题和显示
+
+
     ax.set_title("Coldwave in Hunan", fontsize=titlesize)
+
     plt.tight_layout()
+
+    #fig.savefig(f"figures/load_change_in_{region}.pdf", bbox_inches="tight")
+    #fig.savefig(f"figures/load_change_in_{region}.svg", bbox_inches="tight")
     fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
-    #plt.axis('equal')
+
     plt.show()
+
 
 #plot_hunan_map()
 
