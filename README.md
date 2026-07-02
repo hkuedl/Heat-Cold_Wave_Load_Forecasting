@@ -2,7 +2,7 @@
 
 *In this work, we introduce a data-centric framework, ESDF, to address the critical challenge of electricity load forecasting during extreme heatwaves and coldwaves. The core of our approach is a three-stage pipeline that sequentially addresses data synthesis, representation purification, and final prediction to overcome the fundamental limitations of data scarcity and the fidelity gap in synthetic data.*
 
-This repository includes codes for article "Electricity Load Forecasting Under Extreme Heat and Clod Waves" and a brief introduction of how to use them.
+This repository includes codes for article "Electricity Load Forecasting Under Extreme Heat and Cold Waves" and a brief introduction of how to use them.
 
 Authors: Nan Lu, Dalin Qin, Yangze Zhou, Lei Bai, Qingsong Wen, Chongqing Kang, Yi Wang
 
