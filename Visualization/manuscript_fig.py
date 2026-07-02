@@ -29,6 +29,9 @@ import torch
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.cm import ScalarMappable
 import matplotlib.patches as mpatches
+import matplotlib as mpl
+from scipy.stats import wilcoxon
+from matplotlib.lines import Line2D
 
 
 
@@ -55,20 +58,20 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
                  '441800', '440500', '441500', '440200', '440300',
                  '441700', '445300', '440800', '441200', '442000',
                  '440400']
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(5.5, 5.5), dpi=90)
     plt.axis('equal')
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
 
-    cmap = plt.get_cmap('GnBu')  # Yellow-Orange-Red Label, for thermal values
+    cmap = plt.get_cmap('GnBu')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  
+    sm.set_array([])  # 必须设置一个空数组
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)
+    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -85,7 +88,7 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
         end_date = pd.to_datetime(end_time)
 
         data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
+        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
 
         load = np.array(data['Load'])
         temperature = np.array(data['Temperature'])
@@ -144,14 +147,14 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
         print(i)
         guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
-        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # Guangdong
+        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        #loc="lower right",  
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  # Use the main image coordinate system
+        #loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -164,9 +167,9 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right", 
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2), 
-        bbox_transform=ax.transAxes,  # Use the main image coordinate system
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -175,18 +178,18 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     bins = np.linspace(
         0,
         1,
-        100  # number of bins
+        100  # 分箱数量
     )
 
-    # Calculate the histogram data for two distributions (np.mean(np.array(hotwave_tem_norm), axis=1)
+    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # use the shared bin_edges
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,
+        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
         align='edge',
         color='grey',
         alpha=0.7,
@@ -195,10 +198,10 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     )
 
     ax_inset_2.bar(
-      x=bin_edges[:-1],  # left edge of bins
+      x=bin_edges[:-1],  # 分箱左边界
       height=counts_hotwave,
-      width=np.diff(bin_edges),  # width of bins
-      align='edge',  
+      width=np.diff(bin_edges),  # 分箱宽度
+      align='edge',  # 柱子对齐分箱边缘
       color='salmon',
       alpha=1,
       linewidth=1,
@@ -238,16 +241,17 @@ def plot_guangdong_map(titlesize=16, ticksize=14, labelsize=14, region='guangdon
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-
+    # 设置标题和显示
     ax.set_title("Heatwave in Guangdong", fontsize=titlesize)
     plt.tight_layout()
 
     #plt.axis('equal')
     #plt.show()
 
-    fig.savefig('figures/load_change_in_{}.pdf'.format(region))
+    fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
     fig.show()
 
+#plot_guangdong_map()
 
 def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     import pandas as pd
@@ -262,19 +266,19 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
                  '430200', '431100', '430300', '433100', '430900',
                  '430400', '430500', '431000', '430100']
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=90)
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
 
-    cmap = plt.get_cmap('RdPu')  # Yellow-Orange-Red Label, for thermal values
+    cmap = plt.get_cmap('RdPu')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  
+    sm.set_array([])  # 必须设置一个空数组
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
-    cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize) 
+    cbar.set_label('Load Increase Ratio in Coldwave Periods', fontsize=labelsize)
+    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -291,8 +295,9 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
 
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  # ensure Data_Hour is datetime type
-       
+        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
+        # data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
+        # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
         load = np.array(data['load'])
         temperature = np.array(data['temp'])
 
@@ -349,14 +354,14 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
         print(i)
         guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
-        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8) 
+        guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -369,27 +374,27 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  
+        100  # 分箱数量
     )
 
-    # (np.mean(np.array(hotwave_tem_norm), axis=1)
+    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(coldwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  
+        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
         align='edge',
         color='grey',
         alpha=0.7,
@@ -398,10 +403,10 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  
+        x=bin_edges[:-1],  # 分箱左边界
         height=counts_hotwave,
-        width=np.diff(bin_edges),  
-        align='edge',  
+        width=np.diff(bin_edges),  # 分箱宽度
+        align='edge',  # 柱子对齐分箱边缘
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -434,12 +439,14 @@ def plot_hunan_map(titlesize=16, ticksize=14, labelsize=14, region='hunan'):
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
+    # 设置标题和显示
     ax.set_title("Coldwave in Hunan", fontsize=titlesize)
     plt.tight_layout()
-    fig.savefig('figures/load_change_in_{}.pdf'.format(region))
+    fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
     #plt.axis('equal')
     plt.show()
 
+#plot_hunan_map()
 
 def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     import pandas as pd
@@ -457,21 +464,21 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     #city_name = ['Czech Republic']
 
 
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=100)
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     print(world[world['NAME'].str.contains('Czechia', case=False)])
 
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
 
-    cmap = plt.get_cmap('Oranges')  # Yellow-Orange-Red Label, for thermal values
+    cmap = plt.get_cmap('Oranges')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  
+    sm.set_array([])  # 必须设置一个空数组
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
-    cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  
+    cbar.set_label('Load Increase Ratio in Coldwave Periods', fontsize=labelsize)
+    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -521,7 +528,7 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
 
         for j in range(30, load.shape[0] // 24 - 3 - 30 - 6):
             if np.any(np.isnan(load[24 * j: 24 * (j + 1)])) or np.any(np.isnan(temperature[24 * i: 24 * (i + 1)])):
-                continue  
+                continue  # 跳过当前循环
 
             ## define the cold wave index
             ECI_sig = np.mean(T_i_list[j:j + 3]) - T_05
@@ -556,14 +563,14 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
         #target = world[world['NAME'].str.contains(country, case=False)]
         #print(target)
 
-        target.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  
+        target.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2), 
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -576,27 +583,27 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  
+        100  # 分箱数量
     )
 
-    # (np.mean(np.array(hotwave_tem_norm), axis=1)
+    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(coldwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges) 
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave, 
+        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
         align='edge',
         color='grey',
         alpha=0.7,
@@ -605,10 +612,10 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  
+        x=bin_edges[:-1],  # 分箱左边界
         height=counts_hotwave,
-        width=np.diff(bin_edges), 
-        align='edge',  
+        width=np.diff(bin_edges),  # 分箱宽度
+        align='edge',  # 柱子对齐分箱边缘
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -640,11 +647,14 @@ def plot_europe_map(titlesize=16, ticksize=14, labelsize=14, region='europe'):
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
+    # 设置标题和显示
     ax.set_title("Coldwave in Europe", fontsize=titlesize)
     plt.tight_layout()
     #plt.axis('equal')
-    fig.savefig('figures/load_change_in_{}.pdf'.format(region))
+    fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
     plt.show()
+
+#plot_europe_map()
 
 
 def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
@@ -658,20 +668,20 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     city_name = ['COAST', 'EAST', 'FAR_WEST', 'NORTH', 'NORTH_C',
                      'SOUTH_C', 'SOUTHERN', 'WEST', 'FAR_WEST']
 
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=100)
     plt.axis('equal')
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
     usa_states = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip")
-    
+    # 筛选出德州数据
 
 
 
-    cmap = plt.get_cmap('YlOrRd')  # Yellow-Orange-Red Label, for thermal values
+    cmap = plt.get_cmap('YlOrRd')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
 
     counties = gpd.read_file("map_data/tl_2021_us_county.zip")
-    # Filter counties in Texas, where ‘STATEFP’ is the state's FIPS code, and Texas is ‘48’.
+    # 筛选出德州的县，'STATEFP'是州的FIPS代码，德州是'48'
     tx_counties = counties[counties['STATEFP'] == '48'].copy()
     erlot_region_mapping = {
         'Victoria': 'COAST',
@@ -903,20 +913,20 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
 
 
 
-    # Convert the mapping dictionary into a DataFrame for easier subsequent merging.
+    # 将映射字典转换为一个DataFrame，方便后续合并
     mapping_df = pd.DataFrame(list(erlot_region_mapping.items()), columns=['NAME', 'ERCOT_Region'])
 
-    # 3. Integrating ERCOT regional information into Texas geographic data
-    # Use a left join to ensure all Texas counties are retained, even if some counties are not in the map (these county areas will be NaN).
+    # 3. 将ERCOT区域信息合并到德州地理数据中
+    # 使用左连接，确保所有德州县都被保留，即使有些县不在您的映射里（这些县区域会为NaN）
     tx_counties_with_region = tx_counties.merge(mapping_df, on='NAME', how='left')
     regions_gdf = tx_counties_with_region.dissolve(by='ERCOT_Region')
 
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  
+    sm.set_array([])  # 必须设置一个空数组
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  
+    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
 
 
     colors = []
@@ -934,7 +944,7 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
         end_date = pd.to_datetime(end_time)
 
         data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
+        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
 
         load = np.array(data['Load'])
         temperature = np.array(data['Temperature'])
@@ -986,7 +996,9 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
         colors.append(color)
 
         print(i)
+        #guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
+        #guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
 
     region_colors = {
@@ -998,6 +1010,7 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
         'SOUTH_CENTRAL': colors[5],
         'SOUTHERN': colors[6],
         'WEST': colors[7]
+        # 为其他区域添加颜色...
     }
     colors = [region_colors.get(region, 'gray') for region in regions_gdf.index]
 
@@ -1010,9 +1023,9 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes, 
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -1025,27 +1038,27 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100 
+        100  # 分箱数量
     )
 
-    # (np.mean(np.array(hotwave_tem_norm), axis=1)
+    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges) 
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave, 
+        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
         align='edge',
         color='grey',
         alpha=0.7,
@@ -1054,10 +1067,10 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1], 
+        x=bin_edges[:-1],  # 分箱左边界
         height=counts_hotwave,
-        width=np.diff(bin_edges),
-        align='edge',  
+        width=np.diff(bin_edges),  # 分箱宽度
+        align='edge',  # 柱子对齐分箱边缘
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -1085,15 +1098,46 @@ def plot_texas_map(titlesize=16, ticksize=14, labelsize=14, region='texas'):
     ax_inset.set_xlabel('Hour', fontsize=labelsize)
     ax_inset.set_ylabel('Load', fontsize=labelsize)
 
-    ax.set_xlim(-108, -93)  # Longitude range of Texas
-    ax.set_ylim(22, 38)  # Latitude range of Texas
+    ax.set_xlim(-108, -93)  # 德州经度范围
+    ax.set_ylim(22, 38)  # 德州纬度范围
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    legend_handles = [
+        Line2D([0], [0], color='crimson', marker='s',
+               markerfacecolor='white', linewidth=1.8, markersize=5,
+               label='Heatwave load'),
+        Line2D([0], [0], color='black', marker='o',
+               markerfacecolor='white', linewidth=1.8, markersize=5,
+               label='Common load'),
+        Patch(facecolor='salmon', edgecolor='none', alpha=1,
+              label='Extreme temp.'),
+        Patch(facecolor='grey', edgecolor='none', alpha=0.7,
+              label='Common temp.')
+    ]
+
+    ax.legend(
+        handles=legend_handles,
+        loc='upper left',
+        bbox_to_anchor=(0.02, 0.98),
+        frameon=True,
+        fancybox=False,
+        framealpha=0.9,
+        edgecolor='black',
+        fontsize=labelsize,
+        handlelength=1.5,
+        handletextpad=0.5,
+        borderpad=0.4,
+        labelspacing=0.35
+    )
+
+    # 设置标题和显示
     ax.set_title("Heatwave in Texas", fontsize=titlesize)
     plt.tight_layout()
     #plt.axis('equal')
-    fig.savefig('figures/load_change_in_{}.pdf'.format(region))
+    fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
     plt.show()
 
 #plot_texas_map()
@@ -1112,30 +1156,31 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     cities = ['Maharashtra', 'Delhi']
     colors = []
 
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=100)
     plt.axis('equal')
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip")
     world.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
+    # 筛选出德州数据
     states = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip")
 
-    # filter Maharashtra and Delhi
+    # 筛选出Maharashtra和Delhi
     target_regions = states[states['name'].isin(['Maharashtra', 'Delhi'])]
 
 
 
-    cmap = plt.get_cmap('Blues')  # Yellow-Orange-Red Label, for thermal values
+    cmap = plt.get_cmap('Blues')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
 
-    #india = world[world['NAME'] == 'India']  # Ensure the WGS84 coordinate system is used.
+    #india = world[world['NAME'] == 'India']  # 确保为WGS84坐标系
     #india.plot(ax=ax, color=cmap(norm(1.2)), edgecolor='white', alpha=0.7, linewidth=1)
 
 
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  
+    sm.set_array([])  # 必须设置一个空数组
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  
+    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -1151,7 +1196,7 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
         end_date = pd.to_datetime(end_time)
 
         data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
-        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # ensure Data_Hour is datetime type
+        data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
 
         load = np.array(data['Load'])
         temperature = np.array(data['Temperature'])
@@ -1206,19 +1251,21 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
 
         print(hot_common_ratio)
         print(i)
+        #guangdong = gpd.read_file('https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={}'.format(city_code[i]))
 
+        #guangdong.plot(ax=ax, color=color, edgecolor='white', linewidth=0.8)  # 广东省
 
     target_regions.plot(ax=ax, color=colors,
                         edgecolor='white',
                         linewidth=1.5,
                         alpha=0.7)
 
-    # Highlight Delhi location (using a dot marker)
-    delhi_coords = (77.1025, 28.7041)  # Latitude and longitude of Delhi
+    # 突出显示 Delhi 位置（使用点标记）
+    delhi_coords = (77.1025, 28.7041)  # Delhi 的经纬度
     ax.scatter(delhi_coords[0], delhi_coords[1], color='red', s=200, zorder=5,
                marker='*', edgecolor='darkred', linewidth=2)
 
-    # add markers
+    # 添加标注
     ax.annotate('Delhi', xy=delhi_coords, xytext=(77.5, 29.0),
                 fontsize=12, fontweight='bold',
                 arrowprops=dict(arrowstyle='->', color='red', lw=1.5),
@@ -1228,16 +1275,16 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset_zoom = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.65, 0.65, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.65, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
     delhi_region = states[states['name'].str.contains('Delhi', na=False)]
     delhi_region.plot(ax=ax_inset_zoom, color=colors[1], alpha=0.8, edgecolor=colors[1], linewidth=2)
     ax_inset_zoom.set_title('Delhi (Enlarged)', fontsize=titlesize-2)
-    ax_inset_zoom.set_xticks([77.125])  # East
-    ax_inset_zoom.set_yticks([28.5, 28.75])  # North
+    ax_inset_zoom.set_xticks([77.125])  # 东经
+    ax_inset_zoom.set_yticks([28.5, 28.75])  # 北纬
     ax_inset_zoom.set_xticklabels(['77.125°E'])
     ax_inset_zoom.set_yticklabels(['28.5°N', '28.75°N'])
     ax_inset_zoom.set_box_aspect(0.6)
@@ -1248,9 +1295,9 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right", 
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2), 
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -1263,19 +1310,19 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  
+        100  # 分箱数量
     )
 
-    # (np.mean(np.array(hotwave_tem_norm), axis=1)
+    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
     counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
@@ -1283,7 +1330,7 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  
+        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
         align='edge',
         color='grey',
         alpha=0.7,
@@ -1292,10 +1339,10 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1],  
+        x=bin_edges[:-1],  # 分箱左边界
         height=counts_hotwave,
-        width=np.diff(bin_edges),  
-        align='edge',  
+        width=np.diff(bin_edges),  # 分箱宽度
+        align='edge',  # 柱子对齐分箱边缘
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -1308,9 +1355,9 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset_2.set_title('Sample Distribution', fontsize=labelsize)
     ax_inset_2.xaxis.set_tick_params(labelsize=ticksize)
 
-   
-    ax.set_xticks([68, 76, 84, 92, 100])  
-    ax.set_yticks([5, 13, 21, 29])  
+    # 印度的典型经纬度范围
+    ax.set_xticks([68, 76, 84, 92, 100])  # 东经
+    ax.set_yticks([5, 13, 21, 29])  # 北纬
 
     ax.set_xticklabels(['68°E', '76°E', '84°E', '92°E', '100°E'])
     ax.set_yticklabels(['5°N', '13°N', '21°N', '29°N'])
@@ -1324,22 +1371,22 @@ def plot_India_map(titlesize=16, ticksize=14, labelsize=14, region='india'):
     ax_inset.set_xlabel('Hour', fontsize=labelsize)
     ax_inset.set_ylabel('Load', fontsize=labelsize)
 
-    ax.set_xlim(68, 97)  
-    ax.set_ylim(5, 34)  
+    ax.set_xlim(68, 97)  # 德州经度范围
+    ax.set_ylim(5, 34)  # 德州纬度范围
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-
+    # 设置标题和显示
     ax.set_title("Heatwave in India", fontsize=titlesize)
     plt.tight_layout()
     #plt.axis('equal')
-    fig.savefig('figures/load_change_in_{}.pdf'.format(region))
+    fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
     plt.show()
 
 #plot_India_map()
 
 def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
-
+    # 读取数据
     city_name = ['Allegheny Power System',
                  'American Electric Power Co., Inc', 'Atlantic Electric Company',
                  'Baltimore Gas and Electric Company',
@@ -1362,33 +1409,38 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
                  'Pennsylvania Electric Company', 'Pennsylvania Power & Light Company',
                  'Potomac Electric Power Company', 'Public Service Electric & Gas Company'
                  ]
-
+    # 读取PJM数据
     pjm = gpd.read_file("map_data/PJM Zone.zip")
+    print("原始PJM坐标系:", pjm.crs)
 
-    # transformed into WGS84
+    # 转换为WGS84地理坐标系
     pjm_wgs84 = pjm.to_crs('EPSG:4326')
+    print("转换后坐标系:", pjm_wgs84.crs)
 
     world = gpd.read_file("https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip").copy()
 
-    # world map transformed into WGS84
+    # 检查PJM数据的坐标系
+    print("PJM坐标系:", pjm_wgs84.crs)
+
+    # 将世界地图转换为PJM数据的坐标系
     world_projected = world.to_crs(pjm_wgs84.crs)
 
-
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
+    # 在投影坐标系中绘制
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=100)
     plt.axis('equal')
     world_projected.plot(ax=ax, color='lightgray', edgecolor='gray', linewidth=0.5)
 
     colors = []
 
-    cmap = plt.get_cmap('Greens')  
+    cmap = plt.get_cmap('Greens')  # 黄-橙-红色标，适用于热力值
     norm = Normalize(0, 0.5)
 
     sm = ScalarMappable(norm=norm, cmap=cmap)
-    sm.set_array([])  
+    sm.set_array([])  # 必须设置一个空数组
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal',
                         shrink=0.7, pad=0.1, aspect=30)
     cbar.set_label('Load Increase Ratio in Heatwave Periods', fontsize=labelsize)
-    cbar.ax.tick_params(labelsize=ticksize)  
+    cbar.ax.tick_params(labelsize=ticksize)  # 调整色标字体大小
 
     common_load_norm = []
     hotwave_load_norm = []
@@ -1405,17 +1457,17 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
         end_date = pd.to_datetime(end_time)
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  
-            hour = int(parts[-1])  
+            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
+            hour = int(parts[-1])  # 获取小时部分并转换为整数
 
-
+            # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  
-                return parts[0] + f'/{new_hour:02d}'  
+                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
+                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  
+            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
         #start_date = pd.to_datetime(strat_time)  ## Thursday
@@ -1475,7 +1527,7 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
         print(hot_common_ratio)
         print(i)
 
-    # plot PJM regions
+    # 绘制PJM区域（现在坐标单位一致）
     for i in range(len(pjm_zones)):
         zone_name = pjm_zones[i]
         color = colors[i]
@@ -1489,9 +1541,9 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax_inset = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.65, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
@@ -1504,27 +1556,27 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax_inset_2 = inset_axes(
         ax,
         width="100%", height="100%",
-        # loc="lower right",  
-        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  
-        bbox_transform=ax.transAxes,  
+        # loc="lower right",  # 小图的锚点位置
+        bbox_to_anchor=(0.15, 0.15, 0.3, 0.2),  # 锚点偏移（x=1.05 表示主图右侧外）
+        bbox_transform=ax.transAxes,  # 使用主图坐标系
         borderpad=0
     )
 
     bins = np.linspace(
         0,
         1,
-        100  
+        100  # 分箱数量
     )
 
-    # (np.mean(np.array(hotwave_tem_norm), axis=1)
+    # 计算两个分布的直方图数据(np.mean(np.array(hotwave_tem_norm), axis=1)
     counts_hotwave, bin_edges = np.histogram(np.mean(np.array(hotwave_tem_norm), axis=1), bins=bins)
-    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges) 
+    counts_common, _ = np.histogram(np.mean(np.array(common_tem_norm), axis=1), bins=bin_edges)  # 使用相同的bin_edges
 
     ax_inset_2.bar(
         x=bin_edges[:-1],
         height=counts_common,
         width=np.diff(bin_edges),
-        # bottom=counts_hotwave,  
+        # bottom=counts_hotwave,  # 关键参数：堆叠在common的柱子上方
         align='edge',
         color='grey',
         alpha=0.7,
@@ -1533,10 +1585,10 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     )
 
     ax_inset_2.bar(
-        x=bin_edges[:-1], 
+        x=bin_edges[:-1],  # 分箱左边界
         height=counts_hotwave,
-        width=np.diff(bin_edges),  
-        align='edge',  
+        width=np.diff(bin_edges),  # 分箱宽度
+        align='edge',  # 柱子对齐分箱边缘
         color='salmon',
         alpha=1,
         linewidth=1,
@@ -1549,8 +1601,8 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax_inset_2.set_title('Sample Distribution', fontsize=labelsize)
     ax_inset_2.xaxis.set_tick_params(labelsize=ticksize)
 
-    ax.set_xlim(-91, -73)  
-    ax.set_ylim(32, 42)  
+    ax.set_xlim(-91, -73)  # 经度范围（西→东）
+    ax.set_ylim(32, 42)  # 纬度范围（南→北）
     ax.set_yticks([30, 35, 40])
     ax.set_xticks([-90, -85, -80, -75])
     ax.set_xticklabels(['-90°E', '-85°E', '-80°E', '-75°E'])
@@ -1567,10 +1619,10 @@ def plot_pjm_map(titlesize=16, ticksize=14, labelsize=14, region='pjm'):
     ax.set_aspect(1, adjustable='datalim')
     ax.set_box_aspect(0.8)
 
-
+    # 设置标题和显示
     ax.set_title("Heatwave in PJM", fontsize=titlesize)
     plt.tight_layout()
-    fig.savefig('figures/load_change_in_{}.pdf'.format(region))
+    fig.savefig('source_data_storage/figure_1_a_{}.pdf'.format(region))
     # plt.axis('equal')
     plt.show()
 
@@ -1594,15 +1646,16 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
 
     bar_width = 0.5
     for i in range(6):
-
+        # 计算数据
         data1 = [mae_proposed_list[i], rmse_proposed_list[i]]
         data2 = [mae_baseline_list[i] - mae_proposed_list[i],
                  rmse_baseline_list[i] - rmse_proposed_list[i]]
 
-        # x axis location
-        x = np.arange(len(data1)) 
-        x_offset = 0.2  
+        # 设置 x 轴位置
+        x = np.arange(len(data1))  # x 轴位置
+        x_offset = 0.2  # 设置偏移量以减少柱子间距
 
+        # 绘制柱状图
         bars1 = ax[i].bar(x - x_offset / 2, data1,
                           width=bar_width,
                           color=colors[i],
@@ -1616,16 +1669,17 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
                           color=colors[i], alpha=0.5,
                           edgecolor='black',
                           linestyle='--',
-                          linewidth=2,  
+                          linewidth=2,  # 可选：添加填充图案
                           label='Reduction')
 
+        # 计算并添加文本标签
         for j in range(len(data1)):
-            if data2[j] != 0:  
+            if data2[j] != 0:  # 确保不除以零
                 value = data2[j]/data1[j]
                 ax[i].text(x[j] - x_offset / 2, data1[j] + data2[j] + 0.002, f'{value*100:.1f}'+'%↓',
                            ha='center', va='bottom', color='#C24841FF', fontsize=ticksize)
 
-
+        # 美化坐标轴
         ax[i].spines['top'].set_visible(False)
         ax[i].spines['right'].set_visible(False)
         ax[i].set_ylim(0, 0.095)
@@ -1633,19 +1687,20 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
         ax[i].set_title(country_list[i], fontsize=titlesize)
         ax[i].legend(frameon=False, fontsize=ticksize)
 
-
+        # 设置 x 轴范围以增加柱子与 y 轴之间的距离
         ax[i].set_xlim(-0.75, len(data1) - 0.5)
 
-
-        ax[i].set_xticks(x - x_offset / 2)  
-        ax[i].set_xticklabels(['nMAE', 'nRMSE'], rotation=0, fontsize=ticksize, ha='center', va='top') 
+        # 设置 x 轴刻度和标签
+        ax[i].set_xticks(x - x_offset / 2)  # 设置 x 轴刻度位置
+        ax[i].set_xticklabels(['nMAE', 'nRMSE'], rotation=0, fontsize=ticksize, ha='center', va='top')  # 设置 x 轴标签
         ax[i].tick_params(axis='both', labelsize=labelsize)
 
     ax[0].set_ylabel('Forecasting Error', fontsize=labelsize)
     ax[3].set_ylabel('Forecasting Error', fontsize=labelsize)
     plt.tight_layout()
 
-    plt.savefig('figures/overall_performance.pdf')
+    #plt.savefig('figures/overall_performance.pdf')
+    plt.savefig('source_data_storage/figure_1_b.pdf')
     plt.show()
 
 
@@ -1653,18 +1708,18 @@ def basic_reduction(titlesize=16, ticksize=16, labelsize=16):
 
 
 ## Fig. 3
-def plot_bar_subplot_nMAE(data_name = '广东2023热浪'):
-    data_1 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（广东2023热浪）'.format(data_name),
+def plot_bar_subplot_nMAE():
+    data_1 = pd.read_excel('../main_results.xlsx', sheet_name='GD_basic',
                          header=1, usecols='B:Q').values
-    data_2 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（PJM2023热浪）'.format(data_name),
+    data_2 = pd.read_excel('../main_results.xlsx', sheet_name='PJM_basic',
                            header=1, usecols='B:Q').values
-    data_3 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（德州2023热浪）'.format(data_name),
+    data_3 = pd.read_excel('../main_results.xlsx', sheet_name='TX_basic',
                            header=1, usecols='B:Q').values
-    data_4 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（印度2022热浪）'.format(data_name),
+    data_4 = pd.read_excel('../main_results.xlsx', sheet_name='ID_basic',
                            header=1, usecols='B:Q').values
-    data_5 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（湖南2023寒潮）'.format(data_name),
+    data_5 = pd.read_excel('../main_results.xlsx', sheet_name='HN_basic',
                            header=1, usecols='B:Q').values
-    data_6 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（欧洲2018寒潮）'.format(data_name),
+    data_6 = pd.read_excel('../main_results.xlsx', sheet_name='EU_basic',
                            header=1, usecols='B:Q').values
 
     # print(data.values)
@@ -1823,23 +1878,23 @@ def plot_bar_subplot_nMAE(data_name = '广东2023热浪'):
 
         offset += size + PAD
 
-    plt.savefig('figures/rose_nmae.eps')
+    plt.savefig("source_figure_storage/figure_3_a_b_nMAE.svg", bbox_inches="tight")
     plt.tight_layout()
     plt.show()
 
 
-def plot_bar_subplot_nRMSE(data_name = '广东2023热浪'):
-    data_1 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（广东2023热浪）'.format(data_name),
+def plot_bar_subplot_nRMSE():
+    data_1 = pd.read_excel('../main_results.xlsx', sheet_name='GD_basic',
                          header=1, usecols='B:Q').values
-    data_2 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（PJM2023热浪）'.format(data_name),
+    data_2 = pd.read_excel('../main_results.xlsx', sheet_name='PJM_basic',
                            header=1, usecols='B:Q').values
-    data_3 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（德州2023热浪）'.format(data_name),
+    data_3 = pd.read_excel('../main_results.xlsx', sheet_name='TX_basic',
                            header=1, usecols='B:Q').values
-    data_4 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（印度2022热浪）'.format(data_name),
+    data_4 = pd.read_excel('../main_results.xlsx', sheet_name='ID_basic',
                            header=1, usecols='B:Q').values
-    data_5 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（湖南2023寒潮）'.format(data_name),
+    data_5 = pd.read_excel('../main_results.xlsx', sheet_name='HN_basic',
                            header=1, usecols='B:Q').values
-    data_6 = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name='基础（欧洲2018寒潮）'.format(data_name),
+    data_6 = pd.read_excel('../main_results.xlsx', sheet_name='EU_basic',
                            header=1, usecols='B:Q').values
 
     # print(data.values)
@@ -2001,7 +2056,7 @@ def plot_bar_subplot_nRMSE(data_name = '广东2023热浪'):
 
         offset += size + PAD
 
-    plt.savefig('figures/rose_nrmse.eps')
+    plt.savefig("source_figure_storage/figure_3_a_b_nRMSE.svg", bbox_inches="tight")
     plt.tight_layout()
     plt.show()
 
@@ -2024,10 +2079,10 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
         color3 = 'blue'
         color4 = '#70CDBE'
         sheet_name_list = [
-            '基础（德州2023热浪）',
-            '基础（PJM2023热浪）',
-            '基础（印度2022热浪）',
-            '基础（广东2023热浪）'
+            'TX_basic',
+            'PJM_basic',
+            'ID_basic',
+            'GD_basic'
         ]
 
     else:
@@ -2044,8 +2099,8 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
         color3 = 'blue'
         color4 = '#70CDBE'
         sheet_name_list = [
-            '基础（欧洲2018寒潮）',
-            '基础（湖南2023寒潮）'
+            'EU_basic',
+            'HN_basic'
         ]
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -2075,7 +2130,7 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
     informer = []
     autoformer = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('../main_results.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
         for j in range(data.shape[0]-1):
@@ -2099,28 +2154,31 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
                   facecolors=colors[i], label=models[i])
 
     ax[0].plot([0, 0.1], [0, 0.1],
-            'k--', alpha=0.5, linewidth=1, label='y=x')
+            'k--', alpha=0.5, linewidth=1, label='$y=x$')
 
-    # center location
+    # 定义对称中心点
     center = (0.07, 0.07)
+
+    # y=x的斜率是1，垂直线的斜率是-1
+    # 箭头长度
     center_x = 0.07
     center_y = 0.07
     arrow_length = 0.03
     length = 0.03
     offset = length / np.sqrt(3)
-    text_offset = 0.01  
+    text_offset = 0.01  # 文字额外偏移
 
 
     ax[0].annotate('Proposed\nbetter',
-                xy=(center_x - offset, center_y + offset),  
-                xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  
+                xy=(center_x - offset, center_y + offset),  # 箭头终点
+                xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  # 文字位置（向右下偏移）
                 fontsize=ticksize, ha='center', va='center', color=color1,
                 arrowprops=dict(color=color1, arrowstyle='->', lw=2))
 
-
+    # 第二个箭头：Baselines better（蓝色）
     ax[0].annotate('Baselines\nbetter',
-                xy=(center_x + offset, center_y - offset),  
-                xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  
+                xy=(center_x + offset, center_y - offset),  # 箭头终点
+                xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  # 文字位置（向左上偏移）
                 fontsize=ticksize, ha='center', va='center', color=color2,
                 arrowprops=dict(color=color2, arrowstyle='->', lw=2))
 
@@ -2146,7 +2204,7 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
     informer = []
     autoformer = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('../main_results.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
         for j in range(data.shape[0] - 1):
@@ -2169,27 +2227,30 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
                       facecolors=colors[i], label=models[i])
 
     ax[1].plot([0, 0.1], [0, 0.1],
-               'k--', alpha=0.5, linewidth=1, label='y=x')
+               'k--', alpha=0.5, linewidth=1, label='$y=x$')
 
-
+    # 定义对称中心点
     center = (0.07, 0.07)
+
+    # y=x的斜率是1，垂直线的斜率是-1
+    # 箭头长度
     center_x = 0.07
     center_y = 0.07
     arrow_length = 0.03
     length = 0.03
     offset = length / np.sqrt(3)
-    text_offset = 0.01  
+    text_offset = 0.01  # 文字额外偏移
 
     ax[1].annotate('Proposed\nbetter',
-                   xy=(center_x - offset, center_y + offset),  
-                   xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  
+                   xy=(center_x - offset, center_y + offset),  # 箭头终点
+                   xytext=(center_x - offset + text_offset, center_y + offset - text_offset),  # 文字位置（向右下偏移）
                    fontsize=ticksize, ha='center', va='center', color=color1,
                    arrowprops=dict(color=color1, arrowstyle='->', lw=2))
 
-
+    # 第二个箭头：Baselines better（蓝色）
     ax[1].annotate('Baselines\nbetter',
-                   xy=(center_x + offset, center_y - offset),  
-                   xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  
+                   xy=(center_x + offset, center_y - offset),  # 箭头终点
+                   xytext=(center_x + offset - text_offset, center_y - offset + text_offset),  # 文字位置（向左上偏移）
                    fontsize=ticksize, ha='center', va='center', color=color2,
                    arrowprops=dict(color=color2, arrowstyle='->', lw=2))
 
@@ -2206,20 +2267,21 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
 
 
     ax[0].legend(loc='upper center',
-              bbox_to_anchor=(0.75, 0.3),  
-              ncol=2,  
+              bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
+              ncol=2,  # 设置列数以水平排列
               fontsize=ticksize,
               frameon=True,
               edgecolor='black')
 
     ax[1].legend(loc='upper center',
-                 bbox_to_anchor=(0.75, 0.3),  
-                 ncol=2,  
+                 bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
+                 ncol=2,  # 设置列数以水平排列
                  fontsize=ticksize,
                  frameon=True,
                  edgecolor='black')
 
     plt.tight_layout()
+    plt.savefig("source_figure_storage/figure_3_e_f_{}.svg".format(weather_type), bbox_inches="tight")
     plt.show()
 
 
@@ -2227,15 +2289,133 @@ def plot_overall_scatter(titlesize=16, ticksize=14, labelsize=16, weather_type='
 #plot_overall_scatter(weather_type='coldwave')
 
 
+
 ##Fig. 4
+def coldwave_scaler(country='Belgium', strat_time = '2015/01/01/00', end_time = '2017/12/31/23'):
+    data = pd.read_excel('../Data/reformed_data_updated/real_Europe_data_reformed/{}.xlsx'.format(country))
+
+
+    start_date = pd.to_datetime(strat_time)  ## Thursday
+    end_date = pd.to_datetime(end_time)
+    data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
+
+    data['Data_Hour'] = pd.to_datetime(data['Data_Hour'])  # 确保 Data_Hour 列为 datetime 类型
+    #data['Is_Weekend'] = data['Data_Hour'].dt.dayofweek >= 5  # 0=周一, 1=周二, ..., 6=周日
+    # data['Is_Holiday'] = data['Data_Hour'].dt.date.isin(pd.to_datetime(['2015-01-01', '2015-12-25', '2016-01-01', '2016-12-25', ...]).date)  # 添加你的节假日列表
+    load = np.array(data['Load'])
+    temperature = np.array(data['Temperature'])
+
+    return max(load), min(load), max(temperature), min(temperature)
+
+
+def plot_coldwave_curve_2(titlesize=18, ticksize=15, labelsize=18):
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    for country in ['France']:
+        # country = 'COAST'
+        data = pd.read_excel('../Data/reformed_data_updated/real_Europe_data_reformed/{}.xlsx'.format(country))
+
+        start_date = pd.to_datetime('2017/08/01/00')
+        end_date = pd.to_datetime('2018/07/31/23')
+        data = data[(pd.to_datetime(data['Data_Hour']) >= start_date) & (pd.to_datetime(data['Data_Hour']) <= end_date)]
+
+        maxload, minload, maxtem, mintem = coldwave_scaler(country)
+
+        load = np.array(data['Load'])
+        load = (load - minload) / (maxload - minload)
+        temperature = np.array(data['Temperature'])
+        temperature = (temperature - mintem) / (maxtem - mintem)
+
+        tem = [(np.max(temperature[24*i:24*(i+1)])+
+                np.min(temperature[24*i:24*(i+1)]))/2 for i in range(temperature.shape[0]//24)]
+
+        fig, ax = plt.subplots(2, 1, figsize=(9, 6), sharex=True)
+
+        ax1 = ax[0]
+        ax2 = ax[1]
+
+        x1 = np.linspace(0, load.shape[0], load.shape[0])
+        line1, = ax1.plot(x1, load, color='#5480B5FF', lw=0.15)
+        line1, = ax1.plot(x1[0], load[0], label='Load', color='#88A0DCFF', lw=1)
+        ax1.set_ylim([0, 1.1])
+        #ax1.set_xlabel('Time Index [h]')
+        ax1.set_ylabel('Norm. Load', fontsize=labelsize, labelpad=10)
+        #ax1.tick_params(axis='y', labelcolor='#A8CDECFF')
+        ax1.set_title('Historical Load and Temp. Data', fontsize=titlesize)
+
+
+        x2 = np.linspace(0, load.shape[0], load.shape[0]//24)
+        #ax2 = ax1.twinx()
+
+        line2, = ax2.plot(x2, tem, label='Daily Temp.', color='#C24841FF', lw=0.8)
+        ax2.set_ylim([0, 1])
+        ax2.set_ylabel('Norm. Daily Temp.', fontsize=labelsize, labelpad=10)
+
+        line3 = ax1.fill_between([4100+i+31*24 for i in range(300)],  # x值范围
+                        [0 for i in range(300)],  # 下边界（曲线本身）
+                        [1.05 for i in range(300)],  # 上边界（比曲线最高点高2个单位）
+                        color='blue',
+                        alpha=0.1, label='Coldwave')
+
+        ax2.fill_between([4100 + i + 31 * 24 for i in range(300)],  # x值范围
+                         [0 for i in range(300)],  # 下边界（曲线本身）
+                         [1.05 for i in range(300)],  # 上边界（比曲线最高点高2个单位）
+                         color='blue',
+                         alpha=0.1, label='Coldwave')
+
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        #ax2.spines['right'].set_color('#C24841FF')  # 轴线颜色
+        #ax2.yaxis.label.set_color('#C24841FF')  # 标签颜色
+        #ax2.tick_params(axis='y', colors='#C24841FF')  # 刻度颜色
+        #ax1.grid()
+
+        lines = [line1, line2, line3]  # 手动组合线条对象
+        labels = [line.get_label() for line in lines]
+        ax1.legend(lines, labels,
+                   loc='upper left', edgecolor='black',
+                   frameon=False, ncols=1,
+                   handlelength=1, columnspacing=1, fontsize=ticksize)
+
+        #ax1.annotate('Coldwave',
+        #             xy=(4500, 0.8),  # 箭头终点位置
+        #             xytext=(5500, 0.8),  # 箭头起点位置（向右偏移300单位）
+        #             arrowprops=dict(arrowstyle='->', color='blue', lw=2),
+        #             ha='center')
+
+
+        #plt.title('Load Visualization - Coldwaves')
+        #ax1.set_xticks([0, 2000, 4000, 6000, 8000])
+        ax1.set_yticks([0, 0.4, 0.8])
+        x = [31*24, 123*24, 215*24, 304*24]
+        labels = ['Sep.', 'Dec.', 'Mar.', 'Jun.']
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(labels, rotation=0, ha='center')  # 旋转45度
+
+
+
+        ax2.set_yticks([0, 0.4, 0.8])
+        ax1.tick_params(axis='both', labelsize=ticksize)  # 同时设置x轴和y轴刻度标签
+        ax2.tick_params(axis='both', labelsize=ticksize)  # 同时设置x轴和y轴刻度标签
+
+        ax1.margins(x=0)
+        ax2.margins(x=0)
+        plt.tight_layout()
+        #ax2.spines['right'].set_visible(False)
+        plt.savefig("source_figure_storage/figure_4_a.svg", bbox_inches="tight")
+
+        plt.show()
+
+#plot_coldwave_curve_2()
+
 def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, ticksize=14, labelsize=18):
     import sys
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_dir)
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples'))
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/Model_parameters'))
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_training_2D'))
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_Model_2D'))
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples')
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Model_parameters')
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_training_2D')
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_Model_2D')
     print(sys.path)
     from forecasting_using_generated_samples.generate_new_samples_2D import generate_coldwave_samples
     from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -2243,7 +2423,7 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
     # Europe
     color = '#4D97CD'
     color2 = '#DB6968'
-    color3 = '#33ABC1'
+    color3 = '#4D97CD'
     color4 = 'crimson'
 
 
@@ -2295,17 +2475,63 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
             EHF = max(0, EHI_sig * max(1, EHI_accl))
             hotwave_index.append(float(EHF > 0))
 
-        coldwave_samples = generate_coldwave_samples(country, num_samples=200, weather_type=weather_type).cpu().detach().numpy()
-        coldwave_samples = coldwave_samples.reshape(coldwave_samples.shape[0],
-                                                    coldwave_samples.shape[1], -1)
+        #coldwave_samples = generate_coldwave_samples(country, num_samples=200, weather_type=weather_type).cpu().detach().numpy()
+        #coldwave_samples = coldwave_samples.reshape(coldwave_samples.shape[0],
+        #                                            coldwave_samples.shape[1], -1)
 
-        avg_coldwave_load = np.mean(coldwave_samples, axis=0)
-        avg_coldwave_tem = np.mean(coldwave_samples, axis=0)
+        #avg_coldwave_load = np.mean(coldwave_samples, axis=0)
+        #avg_coldwave_tem = np.mean(coldwave_samples, axis=0)
 
         load_slice_list = np.array(load_slice_list)
         tem_slice_list = np.array(tem_slice_list)
         extreme_load_list = np.array(extreme_load_list)
         extreme_tem_list = np.array(extreme_tem_list)
+
+        load_samples = extreme_load_list
+        tem_samples = extreme_tem_list
+
+        os.makedirs('temporary_maintained_data', exist_ok=True)
+        file_path = "temporary_maintained_data/real_samples_{}.xlsx".format(weather_type)
+
+        with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+            sheet_name = 'synthetic_samples'
+
+            # Load samples 标题
+            pd.DataFrame([['Load samples']]).to_excel(
+                writer,
+                sheet_name=sheet_name,
+                index=False,
+                header=False,
+                startrow=0
+            )
+
+            # num_samples 行、time_steps 列
+            pd.DataFrame(load_samples).to_excel(
+                writer,
+                sheet_name=sheet_name,
+                index=False,
+                header=False,
+                startrow=1
+            )
+
+            # 空一行后写 Temperature samples
+            tem_start_row = 1 + load_samples.shape[0] + 1
+
+            pd.DataFrame([['Temperature samples']]).to_excel(
+                writer,
+                sheet_name=sheet_name,
+                index=False,
+                header=False,
+                startrow=tem_start_row
+            )
+
+            pd.DataFrame(tem_samples).to_excel(
+                writer,
+                sheet_name=sheet_name,
+                index=False,
+                header=False,
+                startrow=tem_start_row + 1
+            )
 
 
         plt.rcParams['xtick.direction'] = 'in'
@@ -2328,7 +2554,7 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
 
         title = ['Input Sequences', 'Labels']
 
-
+        ## 前两张图分别画
         for j in range(0, 2):
             # Define index mapping: j=0 corresponds to the range (0, 24), j=1 corresponds to the range (168, 192).
             if j == 0:
@@ -2417,32 +2643,38 @@ def plot_generated_interval_coldwave_2(weather_type='common', titlesize=18, tick
             ax[1, j].spines['right'].set_visible(False)
 
 
-        # Merge the legend handles and labels of two subgraphs
-        handles = [line1, line4, line5]  
-        labels = [h.get_label() for h in handles]  
+        # 合并两个子图的图例句柄和标签
+        handles = [line1, line4, line5]  # 所有线条的句柄
+        labels = [h.get_label() for h in handles]  # 对应的标签
 
 
-        fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  
+        fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  # y参数控制垂直位置
         #handles, labels = ax[0, 0].get_legend_handles_labels()
         fig.legend(handles, labels, loc='upper center',
-                   bbox_to_anchor=(0.5, 0.94),  
-                   ncol=3,  
+                   bbox_to_anchor=(0.5, 0.94),  # 调整垂直位置
+                   ncol=3,  # 设置列数以水平排列
                    fontsize=ticksize,
                    frameon=True,
                    edgecolor='black')
 
         fig.suptitle("Input Sequences and Labels in the Original Dataset",
                      y=1, fontsize=titlesize)
+        #fig.subplots_adjust(bottom=0.2, top=0.9)  # 预留底部空间
+        #ax[0].set_title('Sample Visualization', fontsize=16)
         plt.tight_layout(rect=[0, 0, 1, 0.92])
 
-        plt.savefig('figures/synthetic_sample_vis.pdf')
+        plt.savefig("source_figure_storage/figure_4_b.svg", bbox_inches="tight")
         plt.show()
 
 
 
 def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticksize=14, labelsize=18):
         import sys
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples')
+        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Model_parameters')
+        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_training_2D')
+        sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_Model_2D')
+        print(sys.path)
         from forecasting_using_generated_samples.generate_new_samples_2D import generate_coldwave_samples
         from mpl_toolkits.axes_grid1 import make_axes_locatable
         # from forecasting_using_generated_samples.Forecasting_model_training import generate_coldwave_samples
@@ -2505,9 +2737,57 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                                                          weather_type=weather_type).cpu().detach().numpy()
             coldwave_samples = coldwave_samples.reshape(coldwave_samples.shape[0],
                                                         coldwave_samples.shape[1], -1)
+            print(coldwave_samples.shape)
 
-            avg_coldwave_load = np.mean(coldwave_samples, axis=0)
-            avg_coldwave_tem = np.mean(coldwave_samples, axis=0)
+            load_samples = coldwave_samples[:, 0, :]
+            tem_samples = coldwave_samples[:, 1, :]
+
+            os.makedirs('temporary_maintained_data', exist_ok=True)
+            file_path = "temporary_maintained_data/synthetic_samples_{}.xlsx".format(weather_type)
+
+            with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+                sheet_name = 'synthetic_samples'
+
+                # Load samples 标题
+                pd.DataFrame([['Load samples']]).to_excel(
+                    writer,
+                    sheet_name=sheet_name,
+                    index=False,
+                    header=False,
+                    startrow=0
+                )
+
+                # num_samples 行、time_steps 列
+                pd.DataFrame(load_samples).to_excel(
+                    writer,
+                    sheet_name=sheet_name,
+                    index=False,
+                    header=False,
+                    startrow=1
+                )
+
+                # 空一行后写 Temperature samples
+                tem_start_row = 1 + load_samples.shape[0] + 1
+
+                pd.DataFrame([['Temperature samples']]).to_excel(
+                    writer,
+                    sheet_name=sheet_name,
+                    index=False,
+                    header=False,
+                    startrow=tem_start_row
+                )
+
+                pd.DataFrame(tem_samples).to_excel(
+                    writer,
+                    sheet_name=sheet_name,
+                    index=False,
+                    header=False,
+                    startrow=tem_start_row + 1
+                )
+
+
+            #avg_coldwave_load = np.mean(coldwave_samples, axis=0)
+            #avg_coldwave_tem = np.mean(coldwave_samples, axis=0)
 
             load_slice_list = np.array(load_slice_list)
             tem_slice_list = np.array(tem_slice_list)
@@ -2516,9 +2796,10 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
 
             plt.rcParams['xtick.direction'] = 'in'
             plt.rcParams['ytick.direction'] = 'in'
-
+            # fig, ax = plt.subplots(2, 4, figsize=(18, 6))
             fig, ax = plt.subplots(2, 2, figsize=(9, 6))
-
+            # ax = ax.flatten()
+            # 计算均值、最大值和最小值
             mean_load = np.mean(load_slice_list, axis=0)
             max_load = np.max(load_slice_list, axis=0)
             min_load = np.min(load_slice_list, axis=0)
@@ -2528,9 +2809,12 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
             min_tem = np.min(tem_slice_list, axis=0)
             x = np.arange(192)
 
+            # 绘制均值曲线
+            # ax[0].plot(x, mean_curve, color='blue', label='Mean Curve')
 
             title = ['Input Sequences', 'Labels']
 
+            ## 前两张图分别画
 
             for j in range(0, 2):
 
@@ -2541,6 +2825,7 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                     start_idx = 168
                     end_idx = 192
 
+                # 定义索引映射：j=2对应区间(0,24)，j=3对应区间(168,192)
                 if j == 2:
                     start_idx = 72
                     end_idx = 96
@@ -2581,7 +2866,7 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                 margin_ax.set_yticks([])
                 margin_ax.set_ylim(0, 1)
 
-                for k in range(65, 200 - 1):
+                for k in range(165, 200 - 1):
                     ax[0, j].plot(x[start_idx:end_idx], coldwave_samples[k + 1, 0, :][start_idx:end_idx],
                                   color=color, lw=0.15)
                     ax[1, j].plot(x[start_idx:end_idx], coldwave_samples[k + 1, 1, :][start_idx:end_idx],
@@ -2611,7 +2896,7 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                     ax[0, j].set_yticklabels([])
                     ax[1, j].set_yticklabels([])
 
-
+                # 修改x轴刻度标签以反映实际的时间索引
                 ax[0, j].set_xticks([start_idx, start_idx + 12, end_idx])
                 ax[1, j].set_xticks([start_idx, start_idx + 12, end_idx])
                 ax[0, j].set_xticklabels([])
@@ -2622,28 +2907,28 @@ def plot_original_interval_coldwave_2(weather_type='common', titlesize=18, ticks
                 ax[1, j].spines['top'].set_visible(False)
                 ax[1, j].spines['right'].set_visible(False)
 
-            # Merge the legend handles and labels of two subgraphs
-            handles = [line1, line2, line3]  
-            labels = [h.get_label() for h in handles]  
+            # 合并两个子图的图例句柄和标签
+            handles = [line1, line2, line3]  # 所有线条的句柄
+            labels = [h.get_label() for h in handles]  # 对应的标签
 
-            fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  
+            fig.supxlabel('Time Index [hour]', fontsize=labelsize, y=0.02)  # y参数控制垂直位置
             # handles, labels = ax[0, 0].get_legend_handles_labels()
             fig.legend(handles, labels, loc='upper center',
-                       bbox_to_anchor=(0.5, 0.94),  
-                       ncol=3,  
+                       bbox_to_anchor=(0.5, 0.94),  # 调整垂直位置
+                       ncol=3,  # 设置列数以水平排列
                        fontsize=ticksize,
                        frameon=True,
                        edgecolor='black')
-            fig.suptitle("Input Sequences and labels in the Synthetic Dataset",
+            fig.suptitle("Input Sequences and Labels in the Synthetic Dataset",
                          y=1, fontsize=titlesize)
-
+            # fig.subplots_adjust(bottom=0.2, top=0.9)  # 预留底部空间
+            # ax[0].set_title('Sample Visualization', fontsize=16)
             plt.tight_layout(rect=[0, 0, 1, 0.92])
 
-            plt.savefig('figures/synthetic_sample_vis.pdf')
+            plt.savefig("source_figure_storage/figure_4_f_g_{}.svg".format(weather_type), bbox_inches="tight")
             plt.show()
 
 #plot_generated_interval_coldwave_2('coldwave')
-#plot_generated_interval_coldwave_2('common')
 #plot_original_interval_coldwave_2('common')
 #plot_original_interval_coldwave_2('coldwave')
 
@@ -2653,12 +2938,10 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
                                                 synthetic_color='#F58E87',
                                                 weather_type='coldwave'):
     import sys
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_dir)
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples'))
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/Model_parameters'))
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_training_2D'))
-    sys.path.append(os.path.join(project_root, 'forecasting_using_generated_samples/diff_Model_2D'))
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples')
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/Model_parameters')
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_training_2D')
+    sys.path.append('/home/ln/workspace/ExtremeWeather/forecasting_using_generated_samples/diff_Model_2D')
     print(sys.path)
     from forecasting_using_generated_samples.generate_new_samples_2D import generate_coldwave_samples
     # from forecasting_using_generated_samples.Forecasting_model_training import generate_coldwave_samples
@@ -2736,14 +3019,16 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
         df = pd.DataFrame({'Load': sample_load_list, 'Temperature': sample_tem_list,
                            'group': np.repeat('A',sample_load_list.shape[0]) })
 
+        #fig, ax = plt.subplots(1, 3, figsize=(15, 5))  # 1行3列，总宽度18，高度6
+        #fig.subplots_adjust(wspace=0.4)  # 调整子图之间的水平间距
 
 
 
         #fig, ax = plt.subplots(2, 1, figsize=(6, 6))
         g = sns.jointplot(data=df, x='Load', y='Temperature',
                           color=original_color,
-                          height=5.25,  
-                          ratio=3,  
+                          height=5.25,  # 控制整个图形的高度
+                          ratio=3,  # 主图与边缘图的比例（值越大，主图越小）
                           space=0.3, s=30, lw=0.1, edgecolor=None,
                           marker='o', alpha=0.5,  marginal_ticks=True)
 
@@ -2753,26 +3038,31 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
             label="Synthetic Samples", s=10, edgecolor=None, lw=0.5
         )
 
-
+        # 计算统一的坐标范围和分箱
         x_min = 0
         x_max = 0.9
         y_min = 0
         y_max = 0.9
         bins_x = np.linspace(x_min, x_max, 100)
         bins_y = np.linspace(y_min, y_max, 100)
-
+        # 清空原始边缘分布
         g.ax_marg_x.clear()
         g.ax_marg_y.clear()
 
 
+        # 更新 x 轴边缘分布（包含 new_x）
+        #sns.histplot(x=sample_load_list, ax=g.ax_marg_x, bins=bins_x,
+        #             color="#682C37FF", alpha=0.5, stat="density")
+        # 计算两组数据的直方图
         hist1, bin_edges = np.histogram(generated_sample_load_list, bins=bins_x, density=True)
         hist2, _ = np.histogram(sample_load_list, bins=bins_x, density=True)
 
+        # 绘制堆叠柱状图
         g.ax_marg_x.bar(
-            x=bins_x[:-1],  
-            height=hist1,  
-            width=np.diff(bins_x),  
-            color=synthetic_color,  
+            x=bins_x[:-1],  # 分箱左边缘作为x坐标
+            height=hist1,  # 高度为频数/密度
+            width=np.diff(bins_x),  # 宽度为分箱间隔
+            color=synthetic_color,  # 原始数据颜色
             alpha=0.5,
             edgecolor=None,
             linewidth=1,
@@ -2782,8 +3072,8 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
             x=bins_x[:-1],
             height=hist2,
             width=np.diff(bins_x),
-            bottom=hist1,  
-            color=original_color,  
+            bottom=hist1,  # 垂直堆叠基准
+            color=original_color,  # 生成数据颜色
             alpha=1,
             edgecolor=None,
             linewidth=1,
@@ -2791,46 +3081,59 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
         )
 
 
-
+        # 计算两组数据的直方图
         hist1, bin_edges = np.histogram(generated_sample_tem_list, bins=bins_y, density=True)
         hist2, _ = np.histogram(sample_tem_list, bins=bins_y, density=True)
 
-
+        # 绘制堆叠柱状图
         g.ax_marg_y.barh(
             y=bin_edges[:-1],
             width=hist1,
             height=np.diff(bin_edges),
             color=synthetic_color,
             alpha=0.5,
-            edgecolor=None, 
+            edgecolor=None,  # 边框颜色
             linewidth=1
         )
         g.ax_marg_y.barh(
             y=bin_edges[:-1],
             width=hist2,
             height=np.diff(bin_edges),
-            left=hist1,  
+            left=hist1,  # 关键：以hist1为基准堆叠
             color=original_color,
             alpha=1,
-            edgecolor=None,  
+            edgecolor=None,  # 边框颜色
             linewidth=1,
         )
 
+        #sns.kdeplot(
+        #    y=sample_tem_list,
+        #    ax=g.ax_marg_y,
+        #    color="#682C37FF",
+        #    linewidth=2
+        #)
 
-        # Hide all edge distribution scales and labels
+        #sns.kdeplot(
+        #    y=generated_sample_tem_list,
+        #    ax=g.ax_marg_y,
+        #    color="#7887A4FF",
+        #    linewidth=2
+        #)
+
+        # 隐藏所有边缘分布的刻度和标签
         g.ax_marg_x.tick_params(
-            axis='both',  
-            which='both',  
-            length=5, 
-            labelbottom=False, 
+            axis='both',  # 同时操作x和y轴（虽然marg_x只有x轴）
+            which='both',  # 主刻度和次刻度
+            length=5,  # 刻度线长度为0
+            labelbottom=False,  # 隐藏x轴标签
             labelleft=False,
-            width=2
+            width=2# 隐藏y轴标签（对marg_x无效，但保留以防万一）
         )
         g.ax_marg_y.tick_params(
             axis='both',
             which='both',
             length=5,
-            labelleft=False, 
+            labelleft=False,  # 隐藏y轴标签
             labelbottom=False,
             width=2
         )
@@ -2838,43 +3141,43 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
 
         def get_handles():
             scatter_handle1 = plt.Line2D(
-                [0], [0],  
-                marker='o', 
-                color='w', 
-                markerfacecolor=original_color,  
-                markersize=8,  
-                label='Original-Samples',  
-                alpha=0.5  
+                [0], [0],  # 虚拟数据点
+                marker='o',  # 与您的散点图标记一致
+                color='w',  # 将线条颜色设为白色（或‘none’）
+                markerfacecolor=original_color,  # 标记的填充颜色
+                markersize=8,  # 标记大小
+                label='Original-Samples',  # 与您的散点图标签一致
+                alpha=0.5  # 透明度一致
             )
 
             scatter_handle2 = plt.Line2D(
-                [0], [0],  
-                marker='o',  
-                color='w',  
-                markerfacecolor=synthetic_color,  
-                markersize=8,  
-                label='Synthetic-Samples',  
-                alpha=1  
+                [0], [0],  # 虚拟数据点
+                marker='o',  # 与您的散点图标记一致
+                color='w',  # 将线条颜色设为白色（或‘none’）
+                markerfacecolor=synthetic_color,  # 标记的填充颜色
+                markersize=8,  # 标记大小
+                label='Synthetic-Samples',  # 与您的散点图标签一致
+                alpha=1  # 透明度一致
             )
 
 
 
-
+            # 为柱状图创建一个图例句柄（使用一个矩形补丁）
             bar_handle1 = mpatches.Patch(
-                color=original_color,  
-                alpha=1,  
-                label='Original-Density'  
+                color=original_color,  # 与您的柱状图颜色一致
+                alpha=1,  # 与您的柱状图透明度一致
+                label='Original-Density'  # 与您的柱状图标签一致
             )
 
             bar_handle2 = mpatches.Patch(
-                color=synthetic_color,  
-                alpha=0.5,  
-                label='Synthetic-Density'  
+                color=synthetic_color,  # 与您的柱状图颜色一致
+                alpha=0.5,  # 与您的柱状图透明度一致
+                label='Synthetic-Density'  # 与您的柱状图标签一致
             )
 
-
+            # 2. 将句柄和标签合并到一个列表中
             handles = [scatter_handle1, scatter_handle2, bar_handle1, bar_handle2]
-            labels = [h.get_label() for h in handles]  
+            labels = [h.get_label() for h in handles]  # 从句柄中提取对应的标签
 
             return handles
 
@@ -2882,23 +3185,29 @@ def plot_generated_sample_distribution_coldwave(titlesize=12, ticksize=14, label
 
         g.ax_joint.legend(
             handles = get_handles(),
-            loc="lower center",  
+            loc="lower center",  # 图例位置
             bbox_to_anchor=(0.75, 0.75),
-            frameon=False,  
-            fontsize=ticksize,  
+            frameon=False,  # 显示边框
+            fontsize=ticksize,  # 字体大小
             edgecolor=None,
             facecolor=None
         )
 
         g.ax_joint.set_xlim(x_min, x_max)
         g.ax_joint.set_ylim(y_min, y_max)
-        g.ax_joint.tick_params(axis='both', labelsize=ticksize)  
-        g.ax_joint.set_xlabel("Norm. Load", fontsize=labelsize)  
-        g.ax_joint.set_ylabel("Norm. Temp.", fontsize=labelsize)  
-        g.ax_marg_y.set_xlabel('Density', fontsize=labelsize) 
-
-        plt.locator_params(axis='both', nbins=5)  
+        g.ax_joint.tick_params(axis='both', labelsize=ticksize)  # 刻度标签字体大小
+        g.ax_joint.set_xlabel("Norm. Load", fontsize=labelsize)  # x轴标签字体大小
+        g.ax_joint.set_ylabel("Norm. Temp.", fontsize=labelsize)  # y轴标签字体大小
+        g.ax_marg_y.set_xlabel('Density', fontsize=labelsize)  # 设置y轴标签
+        #g.ax_marg_y.tick_params(axis='y', labelleft=True)  # 确保y轴刻度标签显示
+        #g.ax_marg_x.set_xlim(x_min, x_max)
+        #g.ax_marg_y.set_ylim(y_min, y_max)
+        #g.ax_joint.grid(True, linestyle='-', alpha=0.7, linewidth=0.5)
+        #g.fig.subplots_adjust(top=0.8)
+        #g.fig.suptitle(country, y=1, fontsize=titlesize)
+        plt.locator_params(axis='both', nbins=5)  # 每轴最多显示4个刻度
         plt.tight_layout()
+        plt.savefig("source_figure_storage/figure_4_c_e_{}.svg".format(weather_type), bbox_inches="tight")
         plt.show()
 
 #plot_generated_sample_distribution_coldwave(weather_type='coldwave')
@@ -2934,7 +3243,7 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
               'skyblue', 'skyblue']
     labels = ['ESDF', '0%', '10%',
               '25%', '50%', '75%',
-              '100%']  
+              '100%']  # 您可以自定义标签
     #region_list = ['欧洲', '广东', '德州', 'PJM', '湖南', '印度']
     region_name = ['GD', 'PJM', 'Texas', 'India', 'Europe', 'HN']
     model_list = ['MLP', 'LSTM', 'CNN']
@@ -2944,8 +3253,8 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
     fig, ax = plt.subplots(1, 2, figsize=(7, 4))
 
     plt.subplots_adjust(
-        wspace=0.5,  
-        hspace=0.4 
+        wspace=0.5,  # 列间距（宽度比例）
+        hspace=0.4  # 行间距（高度比例）
     )
 
     proposed_scatter = [[] for i in range(len(ratio_list))]
@@ -2970,13 +3279,13 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
 
 
     proposed_scatter = np.array(proposed_scatter)
-
+    # 计算平均值和95%置信区间
     means = np.mean(proposed_scatter, axis=1)
     stds = np.std(proposed_scatter, axis=1, ddof=1)
     n = proposed_scatter.shape[1]
 
-
-    t_value = stats.t.ppf(0.95, n - 1)  
+    # 计算t分布的临界值（95%置信水平）
+    t_value = stats.t.ppf(0.95, n - 1)  # 双尾检验
     confidence_intervals = t_value * stds / np.sqrt(n)
 
     print(proposed_scatter)
@@ -2989,8 +3298,8 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
 
     for i, bar in enumerate(bars):
         height = bar.get_height()
-
-        ax[0].text(bar.get_x() + bar.get_width() / 2., height * 0.1,  
+        # 在柱子底部内部添加标签
+        ax[0].text(bar.get_x() + bar.get_width() / 2., height * 0.1,  # 高度为柱子的10%位置
                  labels[i], ha='center', va='bottom', rotation=90,
                  fontsize=10, fontweight='bold', color='black')
 
@@ -3026,13 +3335,13 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
 
     proposed_scatter = np.array(proposed_scatter)
 
-
+    # 计算平均值和95%置信区间
     means = np.mean(proposed_scatter, axis=1)
     stds = np.std(proposed_scatter, axis=1, ddof=1)
     n = proposed_scatter.shape[1]
 
-
-    t_value = stats.t.ppf(0.95, n - 1)  
+    # 计算t分布的临界值（95%置信水平）
+    t_value = stats.t.ppf(0.95, n - 1)  # 双尾检验
     confidence_intervals = t_value * stds / np.sqrt(n)
 
     bars = ax[1].bar(range(1, len(ratio_list)+1), means, color=colors,
@@ -3040,8 +3349,8 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
               capsize=5, error_kw={'elinewidth': 1, 'capthick': 1})
     for i, bar in enumerate(bars):
         height = bar.get_height()
-
-        ax[1].text(bar.get_x() + bar.get_width() / 2., height * 0.1, 
+        # 在柱子底部内部添加标签
+        ax[1].text(bar.get_x() + bar.get_width() / 2., height * 0.1,  # 高度为柱子的10%位置
                  labels[i], ha='center', va='bottom', rotation=90,
                  fontsize=10, fontweight='bold', color='black')
     #ax[1].set_xlim(0, 0.1)
@@ -3060,6 +3369,7 @@ def plot_separation_bar(titlesize=16, ticksize=16, labelsize=16, weather_type='h
     ax[1].spines['right'].set_visible(False)
 
     plt.tight_layout()
+    plt.savefig("source_figure_storage/figure_5_a_b_{}.svg".format(weather_type), bbox_inches="tight")
     plt.show()
 
 #plot_separation_bar(weather_type='coldwave')
@@ -3069,17 +3379,17 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
 
     if weather_type == 'heatwave':
         sheet_name_list = [
-            '嵌入（德州2023热浪）',
-            '嵌入（PJM2023热浪）',
-            '嵌入（印度2022热浪）',
-            '嵌入（广东2023热浪）'
+            'TX_ablation',
+            'PJM_ablation',
+            'ID_ablation',
+            'GD_ablation'
         ]
 
         title = 'Heat'
     else:
         sheet_name_list = [
-            '嵌入（欧洲2018寒潮）',
-            '嵌入（湖南2023寒潮）'
+            'EU_ablation',
+            'HN_ablation'
         ]
 
         title = 'Cold'
@@ -3087,15 +3397,15 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     fig, ax = plt.subplots(1, 2, figsize=(7, 4))
 
     plt.subplots_adjust(
-        wspace=0.5,  
-        hspace=0.4 
+        wspace=0.5,  # 列间距（宽度比例）
+        hspace=0.4  # 行间距（高度比例）
     )
 
     proposed_scatter = []
     da_scatter = []
     common_scatter = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('../main_results.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
 
@@ -3144,7 +3454,7 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     da_scatter = []
     common_scatter = []
     for i in range(len(sheet_name_list)):
-        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
+        data = pd.read_excel('../main_results.xlsx', sheet_name=sheet_name_list[i])
 
         data = data.iloc[2:-1, :].reset_index(drop=True).to_numpy()
 
@@ -3186,12 +3496,13 @@ def plot_separation_scatter(titlesize=16, ticksize=16, labelsize=16, weather_typ
     ax[1].spines['right'].set_visible(False)
 
     ax[0].legend(loc='upper center',
-               bbox_to_anchor=(0.7, 0.3),  
-               ncol=1,  
+               bbox_to_anchor=(0.7, 0.3),  # 调整垂直位置
+               ncol=1,  # 设置列数以水平排列
                fontsize=ticksize,
                frameon=False)
 
     plt.tight_layout()
+    plt.savefig("source_figure_storage/figure_5_c_d_{}.svg".format(weather_type), bbox_inches="tight")
     plt.show()
 
 
@@ -3214,6 +3525,22 @@ def plot_separation_curve(titlesize=16, ticksize=16, labelsize=16, weather_type=
         color3 = 'blue'
         color4 = '#70CDBE'
 
+        true = pd.read_csv(
+            '../{}/results/results_basic_{}_LSTM'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 0]
+
+        da = pd.read_csv(
+            '../{}/results/results_basic_{}_LSTM_1'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 1]
+
+        proposed = pd.read_csv(
+            '../{}/results/results_proposed_{}_LSTM'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 1]
+
+        original = pd.read_csv(
+            '../{}/results/results_basic_{}_LSTM'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 1]
+
     else:
         file_name = 'forecasting_using_generated_samples'
         region_name = 'Lithuania'
@@ -3228,21 +3555,23 @@ def plot_separation_curve(titlesize=16, ticksize=16, labelsize=16, weather_type=
         color3 = 'blue'
         color4 = '#70CDBE'
 
-    true = pd.read_csv(
-        '../{}/results/results_basic_{}_LSTM'.format(file_name, region_name),
-        usecols=['true', 'forecasted']).values[:, 0]
+        true = pd.read_csv(
+            '../{}/results/results_basic_{}_LSTM.csv'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 0]
 
-    da = pd.read_csv(
-        '../{}/results/results_basic_{}_LSTM_1'.format(file_name, region_name),
-        usecols=['true', 'forecasted']).values[:, 1]
+        da = pd.read_csv(
+            '../{}/results/results_basic_{}_LSTM_1.csv'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 1]
 
-    proposed = pd.read_csv(
-        '../{}/results/results_proposed_{}_LSTM'.format(file_name, region_name),
-        usecols=['true', 'forecasted']).values[:, 1]
+        proposed = pd.read_csv(
+            '../{}/results/results_proposed_{}_LSTM.csv'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 1]
 
-    original = pd.read_csv(
-        '../{}/results/results_basic_{}_LSTM'.format(file_name, region_name),
-        usecols=['true', 'forecasted']).values[:, 1]
+        original = pd.read_csv(
+            '../{}/results/results_basic_{}_LSTM.csv'.format(file_name, region_name),
+            usecols=['true', 'forecasted']).values[:, 1]
+
+
 
     plt.rcParams['legend.handlelength'] = 1.0
     fig, ax = plt.subplots(1, 1, figsize=(7, 4))
@@ -3290,8 +3619,8 @@ def plot_separation_curve(titlesize=16, ticksize=16, labelsize=16, weather_type=
     #bars = plt.bar(range(1, len(ratio_list)+1), means, color='skyblue', edgecolor='black', alpha=0.7)
 
     ax.legend(loc='upper center',
-               bbox_to_anchor=(0.75, 0.3),  
-               ncol=2,  
+               bbox_to_anchor=(0.75, 0.3),  # 调整垂直位置
+               ncol=2,  # 设置列数以水平排列
                fontsize=ticksize,
                frameon=True,
                edgecolor='black',
@@ -3315,7 +3644,9 @@ def plot_separation_curve(titlesize=16, ticksize=16, labelsize=16, weather_type=
 
 
     plt.tight_layout()
+    plt.savefig("source_figure_storage/figure_5_e_f_{}.svg".format(weather_type), bbox_inches="tight")
     plt.show()
+
 
 
 #plot_separation_curve(weather_type='heatwave')
@@ -3367,17 +3698,18 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
 
     fig, ax = plt.subplots(1, 1, figsize=(10.5, 5))
 
-
+    # 对于 basic 数据
     flatten_basic = [item for sublist in convergence_lists_basic for item in sublist]
+    # 先过滤掉长度小于300的列表
     filtered_basic_lists = [sublist for sublist in flatten_basic if len(sublist) >= 300]
-    # Unify and trim to the minimum length
+    # 再统一截取到最小长度
     if filtered_basic_lists:
         min_length_basic = min(len(sublist) for sublist in filtered_basic_lists)
         trimmed_basic_lists = [sublist[:min_length_basic] for sublist in filtered_basic_lists]
     else:
         trimmed_basic_lists = []
 
-
+    # 对于 rd 数据
     flatten_rd = [item for sublist in convergence_lists_rd for item in sublist]
     filtered_rd_lists = [sublist for sublist in flatten_rd if len(sublist) >= 300]
     if filtered_rd_lists:
@@ -3386,7 +3718,7 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
     else:
         trimmed_rd_lists = []
 
-
+    # 对于 proposed 数据
     flatten_proposed = [item for sublist in convergence_lists_proposed for item in sublist]
     filtered_proposed_lists = [sublist for sublist in flatten_proposed if len(sublist) >= 300]
     if filtered_proposed_lists:
@@ -3422,8 +3754,8 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
     ax.yaxis.set_tick_params(labelsize=ticksize)
 
     plt.legend(loc='upper center',
-               bbox_to_anchor=(0.4, 1),  
-               ncol=3,  
+               bbox_to_anchor=(0.4, 1),  # 调整垂直位置
+               ncol=3,  # 设置列数以水平排列
                fontsize=ticksize,
                frameon=False)
 
@@ -3497,6 +3829,18 @@ def plot_test_convergence_heatwave(titlesize=16, ticksize=16, labelsize=16, zoom
     axins_2.xaxis.set_tick_params(labelsize=ticksize)
     axins_2.yaxis.set_tick_params(labelsize=ticksize)
 
+    # 创建不同的DataFrame（保持原始长度）
+    df_basic = pd.DataFrame({'0% ES': np.mean(np.array(trimmed_basic_lists), axis=0)})
+    df_rd = pd.DataFrame({'100% ES': np.mean(np.array(trimmed_rd_lists), axis=0)})
+    df_proposed = pd.DataFrame({'ESDF': np.mean(np.array(trimmed_proposed_lists), axis=0)})
+
+    # 保存到同一个Excel的不同sheet
+    with pd.ExcelWriter('test_convergence_heatwave.xlsx', engine='openpyxl') as writer:
+        df_basic.to_excel(writer, sheet_name='0% ES', index=False)
+        df_rd.to_excel(writer, sheet_name='100% ES', index=False)
+        df_proposed.to_excel(writer, sheet_name='ESDF', index=False)
+
+
     plt.title('Convergence Curve on Heat Wave Datasets', fontsize=titlesize)
 
     ax.set_ylim(0, 0.2)
@@ -3554,17 +3898,18 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
 
     fig, ax = plt.subplots(1, 1, figsize=(10.5, 5))
 
-
+    # 对于 basic 数据
     flatten_basic = [item for sublist in convergence_lists_basic for item in sublist]
+    # 先过滤掉长度小于300的列表
     filtered_basic_lists = [sublist for sublist in flatten_basic if len(sublist) >= 300]
-
+    # 再统一截取到最小长度
     if filtered_basic_lists:
         min_length_basic = min(len(sublist) for sublist in filtered_basic_lists)
         trimmed_basic_lists = [sublist[:min_length_basic] for sublist in filtered_basic_lists]
     else:
         trimmed_basic_lists = []
 
-
+    # 对于 rd 数据
     flatten_rd = [item for sublist in convergence_lists_rd for item in sublist]
     filtered_rd_lists = [sublist for sublist in flatten_rd if len(sublist) >= 300]
     if filtered_rd_lists:
@@ -3573,7 +3918,7 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
     else:
         trimmed_rd_lists = []
 
-
+    # 对于 proposed 数据
     flatten_proposed = [item for sublist in convergence_lists_proposed for item in sublist]
     filtered_proposed_lists = [sublist for sublist in flatten_proposed if len(sublist) >= 300]
     if filtered_proposed_lists:
@@ -3608,8 +3953,8 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
     ax.yaxis.set_tick_params(labelsize=ticksize)
 
     plt.legend(loc='upper center',
-               bbox_to_anchor=(0.4, 1),  
-               ncol=3,  
+               bbox_to_anchor=(0.4, 1),  # 调整垂直位置
+               ncol=3,  # 设置列数以水平排列
                fontsize=ticksize,
                frameon=False)
 
@@ -3683,6 +4028,17 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
     axins_2.xaxis.set_tick_params(labelsize=ticksize)
     axins_2.yaxis.set_tick_params(labelsize=ticksize)
 
+    # 创建不同的DataFrame（保持原始长度）
+    df_basic = pd.DataFrame({'0% ES': np.mean(np.array(trimmed_basic_lists), axis=0)})
+    df_rd = pd.DataFrame({'100% ES': np.mean(np.array(trimmed_rd_lists), axis=0)})
+    df_proposed = pd.DataFrame({'ESDF': np.mean(np.array(trimmed_proposed_lists), axis=0)})
+
+    # 保存到同一个Excel的不同sheet
+    with pd.ExcelWriter('test_convergence_coldwave.xlsx', engine='openpyxl') as writer:
+        df_basic.to_excel(writer, sheet_name='0% ES', index=False)
+        df_rd.to_excel(writer, sheet_name='100% ES', index=False)
+        df_proposed.to_excel(writer, sheet_name='ESDF', index=False)
+
     plt.title('Convergence Curve on Cold Wave Datasets', fontsize=titlesize)
 
     ax.set_ylim(0, 0.2)
@@ -3692,91 +4048,807 @@ def plot_test_convergence_coldwave(titlesize=16, ticksize=16, labelsize=16, zoom
 
 #plot_test_convergence_coldwave()
 
+def _plot_convergence_from_df(df, title, output_excel=None,
+    titlesize=16, ticksize=16, labelsize=16, zoomx1=500, zoom_offset=350, xlim=0.02, tlim=0.07,
+):
+    color1 = '#699ECA'
+    color2 = '#F16E65'
+    color3 = 'purple'
 
-##Fig. 6
-def plot_scalability_bar(titlesize=12, ticksize=12, labelsize=12, weather_type='heatwave'):
+    df = df.copy()
+    df.columns = [str(col).replace('.1', '') for col in df.columns]
+    df = df.dropna(how='all')
 
-    if weather_type == 'heatwave':
+    for col in ['Epoch', '0% ES', '100% ES', 'ESDF']:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
 
+    # Each curve may stop at a different epoch because of early stopping.
+    epoch = df['Epoch']
 
-        title = 'Heat'
-    else:
+    mask_basic = epoch.notna() & df['0% ES'].notna()
+    mask_rd = epoch.notna() & df['100% ES'].notna()
+    mask_proposed = epoch.notna() & df['ESDF'].notna()
 
-        title = 'Cold'
+    epoch_basic = epoch[mask_basic].values
+    basic = df.loc[mask_basic, '0% ES'].values
 
-    sheet_name_list = [
-        '嵌入（德州2023热浪）',
-        '嵌入（PJM2023热浪）',
-        '嵌入（印度2022热浪）',
-        '嵌入（广东2023热浪）',
-        '嵌入（欧洲2018寒潮）',
-        '嵌入（湖南2023寒潮）'
-    ]
+    epoch_rd = epoch[mask_rd].values
+    rd = df.loc[mask_rd, '100% ES'].values
 
-    fig, ax = plt.subplots(2, 3, figsize=(18, 6))
-    ax = ax.flatten()
+    epoch_proposed = epoch[mask_proposed].values
+    proposed = df.loc[mask_proposed, 'ESDF'].values
 
-    plt.subplots_adjust(
-        wspace=0.5,  
-        hspace=0.4  
+    fig, ax = plt.subplots(1, 1, figsize=(10.5, 5))
+
+    ax.plot(epoch_basic, basic, color=color1, lw=2, label='0% ES')
+    ax.plot(epoch_rd, rd, color=color2, lw=2, label='100% ES')
+    ax.plot(epoch_proposed, proposed, color=color3, lw=2, label='ESDF')
+
+    ax.set_ylabel('nMAE on the Test Set', fontsize=labelsize)
+    ax.set_xlabel('Training Epoch', fontsize=labelsize)
+    ax.xaxis.set_tick_params(labelsize=ticksize)
+    ax.yaxis.set_tick_params(labelsize=ticksize)
+
+    ax.legend(
+        loc='upper center',
+        bbox_to_anchor=(0.4, 1),
+        ncol=3,
+        fontsize=ticksize,
+        frameon=False
     )
 
+    # Zoom 1
+    zoomx2 = zoomx1 + 100
+    axins_1 = ax.inset_axes((0.6, 0.4, 0.3, 0.35))
 
-    for i in range(len(sheet_name_list)):
+    axins_1.plot(epoch_basic, basic, color=color1, lw=2)
+    axins_1.plot(epoch_rd, rd, color=color2, lw=2)
+    axins_1.plot(epoch_proposed, proposed, color=color3, lw=2)
 
-        proposed_scatter = []
-        da_scatter = []
-        common_scatter = []
+    axins_1.set_xlim(zoomx1, zoomx2)
+    axins_1.set_ylim(xlim, tlim)
+    axins_1.set_title('Zoom in', fontsize=labelsize)
+    axins_1.set_xticks([zoomx1, zoomx1 + 50, zoomx1 + 100])
+    axins_1.set_yticks([xlim, xlim + 0.02, xlim + 0.04])
+    axins_1.xaxis.set_tick_params(labelsize=ticksize)
+    axins_1.yaxis.set_tick_params(labelsize=ticksize)
 
+    tx0 = zoomx1
+    tx1 = zoomx2
+    ty0 = xlim
+    ty1 = tlim
+    ax.plot([tx0, tx1, tx1, tx0, tx0], [ty0, ty0, ty1, ty1, ty0], color='black')
 
-        data = pd.read_excel('temporary_maintained_data/极端温度实验结果.xlsx', sheet_name=sheet_name_list[i])
-        if i==2:
-            print(data)
+    con = ConnectionPatch(
+        xyA=(tx0, ty0), xyB=(tx0, ty1),
+        coordsA='data', coordsB='data',
+        axesA=axins_1, axesB=ax
+    )
+    con.set_color('silver')
+    axins_1.add_artist(con)
 
+    con = ConnectionPatch(
+        xyA=(tx1, ty0), xyB=(tx1, ty1),
+        coordsA='data', coordsB='data',
+        axesA=axins_1, axesB=ax
+    )
+    con.set_color('silver')
+    axins_1.add_artist(con)
 
-        data = data.iloc[1:-1, :].reset_index(drop=True).to_numpy()
+    # Zoom 2
+    axins_2 = ax.inset_axes((0.1, 0.4, 0.3, 0.35))
 
-        if i==2:
-            print(data)
+    axins_2.plot(epoch_basic, basic, color=color1, lw=2)
+    axins_2.plot(epoch_rd, rd, color=color2, lw=2)
+    axins_2.plot(epoch_proposed, proposed, color=color3, lw=2)
 
-        for j in range(3):
-            proposed = []
-            da = []
-            common = []
+    tx0 = zoomx1 - zoom_offset
+    tx1 = zoomx2 - zoom_offset
+    ty0 = xlim
+    ty1 = tlim
 
-            for k in range(data.shape[0]):
-                proposed.append(data[k, 6 * j + 1])
-                da.append(data[k, 6 * j + 5])
-                common.append(data[k, 6 * j + 3])
+    axins_2.set_xlim(tx0, tx1)
+    axins_2.set_ylim(xlim, tlim)
+    axins_2.set_title('Zoom in', fontsize=labelsize)
+    axins_2.set_xticks([tx0, tx0 + 50, tx0 + 100])
+    axins_2.set_yticks([xlim, xlim + 0.02, xlim + 0.04])
+    axins_2.xaxis.set_tick_params(labelsize=ticksize)
+    axins_2.yaxis.set_tick_params(labelsize=ticksize)
 
-            proposed_scatter.append(proposed)
-            da_scatter.append(da)
-            common_scatter.append(common)
+    ax.plot([tx0, tx1, tx1, tx0, tx0], [ty0, ty0, ty1, ty1, ty0], color='black')
 
+    con = ConnectionPatch(
+        xyA=(tx0, ty0), xyB=(tx0, ty1),
+        coordsA='data', coordsB='data',
+        axesA=axins_2, axesB=ax
+    )
+    con.set_color('silver')
+    axins_2.add_artist(con)
 
+    con = ConnectionPatch(
+        xyA=(tx1, ty0), xyB=(tx1, ty1),
+        coordsA='data', coordsB='data',
+        axesA=axins_2, axesB=ax
+    )
+    con.set_color('silver')
+    axins_2.add_artist(con)
 
+    if output_excel is not None:
+        df.to_excel(output_excel, index=False)
 
-
-        common_means = [np.mean(sublist) for sublist in common_scatter]
-        da_means = [np.mean(sublist) for sublist in da_scatter]
-        proposed_means = [np.mean(sublist) for sublist in proposed_scatter]
-
-        x = np.arange(3)  
-        width = 0.25  
-
-        for j in range(3):
-
-            ax[i].bar(x - width, [common_means[j]], width, label='Common', color='blue')
-            ax[i].bar(x, [da_means[j]], width, label='DA', color='orange')
-            ax[i].bar(x + width, [proposed_means[j]], width, label='Proposed', color='green')
-
-
-
-
+    ax.set_title(title, fontsize=titlesize)
+    ax.set_ylim(0, 0.2)
+    plt.margins(x=0)
     plt.tight_layout()
+    #plt.show()
+
+def plot_test_convergence_coldwave_from_excel(file_path='../main_results.xlsx', sheet_name='test_convergence',
+    titlesize=16, ticksize=16, labelsize=16, zoomx1=550, xlim=0.02, tlim=0.07,
+):
+    df_cold = pd.read_excel(
+        file_path,
+        sheet_name=sheet_name,
+        header=1,
+        usecols='A:D')
+
+    _plot_convergence_from_df(
+        df=df_cold,
+        title='Convergence Curve on Cold Wave Datasets',
+        output_excel='test_convergence_coldwave.xlsx',
+        titlesize=titlesize,
+        ticksize=ticksize,
+        labelsize=labelsize,
+        zoomx1=zoomx1,
+        zoom_offset=400,
+        xlim=xlim,
+        tlim=tlim)
+
+    plt.savefig("source_figure_storage/figure_5_g_h_cold.svg", bbox_inches="tight")
     plt.show()
 
+def plot_test_convergence_heatwave_from_excel(file_path='../main_results.xlsx', sheet_name='test_convergence',
+    titlesize=16, ticksize=16, labelsize=16, zoomx1=500, xlim=0.02, tlim=0.07,):
+    df_heat = pd.read_excel(
+        file_path,
+        sheet_name=sheet_name,
+        header=1,
+        usecols='F:I'
+    )
+
+    df_heat = df_heat.rename(columns={
+        'Epoch.1': 'Epoch',
+        '0% ES.1': '0% ES',
+        '100% ES.1': '100% ES',
+        'ESDF.1': 'ESDF'
+    })
+
+    _plot_convergence_from_df(
+        df=df_heat,
+        title='Convergence Curve on Heat Wave Datasets',
+        output_excel='test_convergence_heatwave.xlsx',
+        titlesize=titlesize,
+        ticksize=ticksize,
+        labelsize=labelsize,
+        zoomx1=zoomx1,
+        zoom_offset=350,
+        xlim=xlim,
+        tlim=tlim
+    )
+
+    plt.savefig("source_figure_storage/figure_5_g_h_heat.svg", bbox_inches="tight")
+    plt.show()
+
+# 使用方式
+#plot_test_convergence_coldwave_from_excel()
+#plot_test_convergence_heatwave_from_excel()
+
+
+
+##Fig. 6
+
+def plot_scalability_bar(metric='MAE'):
+    font_size = 18
+    sheet_name_list = [
+        'EU_ablation',
+        'TX_ablation',
+        'PJM_ablation',
+        'ID_ablation',
+        'GD_ablation',
+        'HN_ablation'
+    ]
+
+    title_list = [
+        'Europe',
+        'Texas',
+        'PJM',
+        'India',
+        'Guangdong',
+        'Hunan'
+    ]
+    import matplotlib
+    matplotlib.rcParams.update({
+        'font.size': font_size,  # 全局字体大小
+        'axes.titlesize': font_size + 2,  # 子图标题
+        'axes.labelsize': font_size,  # 坐标轴标题
+        'xtick.labelsize': font_size,  # x轴刻度
+        'ytick.labelsize': font_size,  # y轴刻度
+        'legend.fontsize': font_size,  # 图例     # 图表标题
+    })
+    Model = ['MLP', 'LSTM', 'CNN']
+    Setting = ['+Separation', '', '+DA']
+    label_list = ['Backbone', 'Backbone+ES', 'Backbone+ESDF']
+    color_list = ["#A8CDECFF", "#FDDED7", "#C1E0DB"]
+
+    fig, axes = plt.subplots(2, 3, figsize=(20, 10))
+    axes = axes.flatten()
+
+    for idx, sheet_name in enumerate(sheet_name_list):
+        data = pd.read_excel('../main_results.xlsx', sheet_name=sheet_name)
+        cols = ['Country']
+        combined = []
+        for model in Model:
+            for setting in Setting:
+                if setting == '':
+                    combined.append(model)
+                else:
+                    combined.append(f"{model}{setting}")
+        combined = [f"{i}_{metric}" for i in combined for metric in ['MAE', 'RMSE']]
+        cols = cols + combined
+        data.columns = cols
+        data = data.iloc[1:].reset_index(drop=True)
+        MAE_col = [col for col in data.columns if 'MAE' in col]
+        var_MAE_value = np.var(data.iloc[:-1][MAE_col], axis=0).to_numpy()
+        MAE_col = ['MLP_MAE', 'MLP+DA_MAE', 'MLP+Separation_MAE',
+                   'LSTM_MAE', 'LSTM+DA_MAE', 'LSTM+Separation_MAE',
+                   'CNN_MAE', 'CNN+DA_MAE', 'CNN+Separation_MAE']
+
+        RMSE_col = ['MLP_RMSE', 'MLP+DA_RMSE', 'MLP+Separation_RMSE',
+                    'LSTM_RMSE', 'LSTM+DA_RMSE', 'LSTM+Separation_RMSE',
+                    'CNN_RMSE', 'CNN+DA_RMSE', 'CNN+Separation_RMSE']
+
+        # MAE_col=[col for col in data.columns if 'MAE' in col]
+        # RMSE_col = [col for col in data.columns if 'RMSE' in col]
+
+        col_for_draw = MAE_col if metric == 'MAE' else RMSE_col
+
+        min_value = np.min(data.iloc[:-1][col_for_draw], axis=0).to_numpy().reshape(3, 3)
+        max_value = np.max(data.iloc[:-1][col_for_draw], axis=0).to_numpy().reshape(3, 3)
+
+        # var_MAE_value = np.var(data.iloc[:-1][MAE_col], axis=0).to_numpy()#.reshape(3, 3)
+        mean_value = np.mean(data.iloc[:-1][col_for_draw], axis=0).to_numpy()  # .reshape(3, 3)
+        # min_MAE_value = mean_MAE_value - np.sqrt(list(var_MAE_value))
+        # max_MAE_value = mean_MAE_value + np.sqrt(list(var_MAE_value))
+
+        mean_value = mean_value.reshape(3, 3)
+        # min_MAE_value= min_MAE_value.reshape(3, 3)
+        # max_MAE_value= max_MAE_value.reshape(3, 3)
+
+        x = np.arange(len(Model))
+        bar_width = 0.23  # 减小柱子宽度
+        gap = 0.08  # 新增：组内柱子间隔
+
+        ax = axes[idx]
+        for i in range(len(Setting)):
+            # 调整x坐标：增加间隔 (gap)
+            x_pos = x + i * (bar_width + gap)  # 关键修改
+            y = mean_value[:, i]
+            ax.bar(
+                x_pos,
+                y,
+                width=bar_width,
+                capsize=5,
+                label=label_list[i],
+                color=color_list[i],
+                edgecolor='black',
+                linewidth=1
+            )
+        ax.yaxis.grid(True, linestyle='--', alpha=0.6, zorder=0, lw=1.5)  # 添加横向网格线，zorder=0保证在bar下方
+        for patch in ax.patches:
+            patch.set_zorder(2)  # 柱子zorder调高，确保在网格线上方
+            # yerr = np.vstack([
+            #     y - min_value[:, i],
+            #     max_value[:, i] - y
+            # ])
+            # ax.bar(x + i * bar_width, y, width=bar_width, yerr=yerr, capsize=5, label=label_list[i], color=color_list[i])
+        # ax.bar(x + i * bar_width, y, width=bar_width, capsize=5, label=label_list[i], color=color_list[i])
+        total_width = len(Setting) * bar_width + (len(Setting) - 1) * gap
+        center = x + total_width / 2 - bar_width / 2
+        ax.set_xticks(center)
+        ax.set_xticklabels(Model)
+        ax.set_title(title_list[idx])
+        ax.set_ylim(0, 1.4 * np.max(mean_value))
+        #if idx % 3 == 0:
+        #    ax.set_ylabel(metric)
+        ax.set_ylabel('nMAE')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        # ax.legend(fontsize=10)
+    plt.tight_layout(rect=[0, 0.05, 1, 1])
+    # 合并legend到最下方
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=3,  # 图例列数（根据条目数量调整）
+            frameon=True,  # 是否显示边框
+            fontsize=font_size,
+            edgecolor='black')
+    #plt.savefig('../figures/ablation_figure_{}.png'.format(metric), bbox_inches='tight', dpi=300)
+    plt.savefig("source_figure_storage/figure_6_a.svg", bbox_inches="tight")
+    plt.show()
+
+
 #plot_scalability_bar()
+
+
+def plot_sparse_generalization():
+    # =========================
+    # 1. Nature-like style
+    # =========================
+    font_size = 18
+    mpl.rcParams.update({
+        'font.size': font_size,
+        'axes.titlesize': font_size + 2,
+        'axes.labelsize': font_size,
+        'xtick.labelsize': font_size,
+        'ytick.labelsize': font_size,
+        'legend.fontsize': font_size - 1,
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],
+        'axes.linewidth': 1.2,
+        'xtick.major.width': 1.2,
+        'ytick.major.width': 1.2,
+        'xtick.major.size': 5,
+        'ytick.major.size': 5,
+        'pdf.fonttype': 42,
+        'ps.fonttype': 42,
+    })
+
+    # =========================
+    # 2. Read data
+    # =========================
+    file_path = "generalization.xlsx"
+    sheet_name = "sparse"
+    df_raw = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
+
+    # 每个block宽度=7列
+    dataset_blocks = {
+        0: 0,  # 100% dataset
+        10: 7,  # 90%
+        20: 14,  # 80%
+        30: 21,  # 70%
+        40: 28,  # 60%
+        50: 35,  # 50%
+    }
+
+    # 第3行开始是真实数据
+    data_df = df_raw.iloc[3:].copy()
+
+    # 去掉 Average 行，保留逐region用于统计检验
+    regions = data_df.iloc[:, 0].astype(str).tolist()
+    region_mask = [r.strip().lower() != "average" for r in regions]
+    data_regions = data_df.loc[region_mask].reset_index(drop=True)
+
+    # Average 行用于画线
+    avg_row = data_df.loc[[not m for m in region_mask]].iloc[0]
+
+    # =========================
+    # 3. Extract averages
+    # =========================
+    x = []
+    y_esdf, y_lstm, y_es = [], [], []
+
+    for reduction, start_col in dataset_blocks.items():
+        x.append(reduction)
+        y_esdf.append(float(avg_row[start_col + 1]))  # ESDF MAE
+        y_lstm.append(float(avg_row[start_col + 3]))  # LSTM MAE
+        y_es.append(float(avg_row[start_col + 5]))  # ES/DA MAE
+
+    x = np.array(x)
+    y_esdf = np.array(y_esdf)
+    y_lstm = np.array(y_lstm)
+    y_es = np.array(y_es)
+
+    # =========================
+    # 4. Statistical tests
+    # =========================
+    def get_method_values(df, start_col):
+        esdf = pd.to_numeric(df.iloc[:, start_col + 1], errors='coerce').values
+        lstm = pd.to_numeric(df.iloc[:, start_col + 3], errors='coerce').values
+        es = pd.to_numeric(df.iloc[:, start_col + 5], errors='coerce').values
+        return esdf, lstm, es
+
+    def p_to_stars(p):
+        if p < 0.001:
+            return '***'
+        elif p < 0.01:
+            return '**'
+        elif p < 0.05:
+            return '*'
+        else:
+            return 'ns'
+
+    p_results = {}
+    for reduction in [0, 50]:
+        start_col = dataset_blocks[reduction]
+        esdf_vals, lstm_vals, es_vals = get_method_values(data_regions, start_col)
+
+        # 双侧配对 Wilcoxon
+        p_esdf_vs_lstm = wilcoxon(esdf_vals, lstm_vals, alternative='two-sided').pvalue
+        p_esdf_vs_es = wilcoxon(esdf_vals, es_vals, alternative='two-sided').pvalue
+
+        p_results[reduction] = {
+            "ESDF vs LSTM": p_esdf_vs_lstm,
+            "ESDF vs ES": p_esdf_vs_es
+        }
+
+    print("\n=== Statistical significance (paired Wilcoxon signed-rank test) ===")
+    for reduction, res in p_results.items():
+        print(f"\nReduction = {reduction}%")
+        for k, p in res.items():
+            sig = "significant" if p < 0.05 else "not significant"
+            print(f"{k}: p = {p:.4e}, {sig}, {p_to_stars(p)}")
+
+    # =========================
+    # 5. Plot
+    # =========================
+    fig, ax = plt.subplots(figsize=(9, 5))
+
+    # Nature-like muted colors
+    color_lstm = "#0468BFFF"
+    color_es = "#F27127FF"
+    color_esdf = "#46AEA0FF"
+
+    ax.plot(
+        x, y_lstm, '-o', color=color_lstm, lw=2.2, ms=10,
+        markerfacecolor='white', markeredgewidth=1.6, label='LSTM'
+    )
+    ax.plot(
+        x, y_es, '-s', color=color_es, lw=2.2, ms=10,
+        markerfacecolor='white', markeredgewidth=1.6, label='LSTM+ES'
+    )
+    ax.plot(
+        x, y_esdf, '-D', color=color_esdf, lw=2.4, ms=10,
+        markerfacecolor='white', markeredgewidth=1.6, label='LSTM+ESDF'
+    )
+
+    ax.set_xlabel("Dataset reduction ratio (%)")
+    ax.set_ylabel("nMAE")
+    ax.set_xticks(x)
+    ax.set_xlim(-2, 52)
+
+    y_all = np.concatenate([y_esdf, y_lstm, y_es])
+    ymin, ymax = y_all.min(), y_all.max()
+    yrange = ymax - ymin
+    ax.set_ylim(ymin - 0.06 * yrange, ymax + 0.28 * yrange)
+
+    # clean style
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    ax.legend(
+        frameon=False,
+        loc='upper left',
+        handlelength=2.2,
+        borderpad=0.2,
+        labelspacing=0.4
+    )
+
+    # =========================
+    # 6. significance annotations
+    # =========================
+    def add_sig_text(ax, x0, y0, text_top, text_bottom,
+                     color_top, color_bottom,
+                     ha='center', x_shift=0.0,
+                     line_gap=0.085):
+        ax.text(
+            x0 + x_shift, y0,
+            text_top,
+            ha=ha, va='bottom',
+            fontsize=font_size,
+            color=color_top
+        )
+        ax.text(
+            x0 + x_shift, y0 - line_gap * yrange,
+            text_bottom,
+            ha=ha, va='bottom',
+            fontsize=font_size,
+            color=color_bottom
+        )
+
+    for reduction in [0, 50]:
+        idx = np.where(x == reduction)[0][0]
+        local_max = max(y_esdf[idx], y_lstm[idx], y_es[idx])
+
+        p1 = p_results[reduction]["ESDF vs LSTM"]
+        p2 = p_results[reduction]["ESDF vs ES"]
+
+        text_top = f"{p_to_stars(p1)} vs LSTM"
+        text_bottom = f"{p_to_stars(p2)} vs ES"
+
+        # 单独处理 0% 位置，避免左侧越界
+        if reduction == 0:
+            add_sig_text(
+                ax,
+                reduction,
+                local_max + 0.18 * yrange,
+                text_top,
+                text_bottom,
+                color_top=color_lstm,
+                color_bottom=color_es,
+                ha='left',
+                x_shift=0.4,  # 向右挪一点
+                line_gap=0.09  # 增大行间距
+            )
+        else:
+            add_sig_text(
+                ax,
+                reduction,
+                local_max + 0.18 * yrange,
+                text_top,
+                text_bottom,
+                color_top=color_lstm,
+                color_bottom=color_es,
+                ha='center',
+                x_shift=0.0,
+                line_gap=0.09
+            )
+    plt.tight_layout()
+    plt.savefig("source_figure_storage/figure_6_b.svg", bbox_inches="tight")
+    plt.show()
+
+
+#plot_sparse_generalization()
+
+
+def plot_interannual_generalization():
+    # =========================
+    # 1. Nature-like style
+    # =========================
+    font_size = 18
+    mpl.rcParams.update({
+        'font.size': font_size,
+        'axes.titlesize': font_size + 2,
+        'axes.labelsize': font_size,
+        'xtick.labelsize': font_size,
+        'ytick.labelsize': font_size,
+        'legend.fontsize': font_size,
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],
+        'axes.linewidth': 1.2,
+        'xtick.major.width': 1.2,
+        'ytick.major.width': 1.2,
+        'xtick.major.size': 5,
+        'ytick.major.size': 5,
+        'pdf.fonttype': 42,
+        'ps.fonttype': 42,
+    })
+
+    # =========================
+    # 2. Read data
+    # =========================
+    file_path = "generalization.xlsx"
+    sheet_name = "interannual"
+    df_raw = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
+
+    # 每个 year block 宽度 = 8列
+    year_blocks = {
+        "2021": 0,
+        "2022": 8,
+        "2023": 16,
+    }
+
+    # 第3行开始是真实数据
+    data_df = df_raw.iloc[3:].copy()
+
+    # 去掉 Average 行
+    regions = data_df.iloc[:, 0].astype(str).tolist()
+    region_mask = [r.strip().lower() != "average" for r in regions]
+    data_regions = data_df.loc[region_mask].reset_index(drop=True)
+
+    # =========================
+    # 3. Helper functions
+    # =========================
+    def get_year_values(df, start_col):
+        esdf = pd.to_numeric(df.iloc[:, start_col + 1], errors='coerce').values
+        lstm = pd.to_numeric(df.iloc[:, start_col + 3], errors='coerce').values
+        es = pd.to_numeric(df.iloc[:, start_col + 5], errors='coerce').values
+        return lstm, es, esdf
+
+    def p_to_text(p):
+        if p < 0.001:
+            return '***'
+        elif p < 0.01:
+            return '**'
+        elif p < 0.05:
+            return '*'
+        else:
+            return 'ns'
+
+    # =========================
+    # 4. Prepare data and stats
+    # =========================
+    plot_data = {}
+    p_results = {}
+
+    for year, start_col in year_blocks.items():
+        lstm_vals, es_vals, esdf_vals = get_year_values(data_regions, start_col)
+
+        plot_data[year] = {
+            "LSTM": lstm_vals,
+            "LSTM+ES": es_vals,
+            "LSTM+ESDF": esdf_vals
+        }
+
+        p_esdf_vs_lstm = wilcoxon(esdf_vals, lstm_vals, alternative='two-sided').pvalue
+        p_esdf_vs_es = wilcoxon(esdf_vals, es_vals, alternative='two-sided').pvalue
+
+        p_results[year] = {
+            "vs LSTM": p_esdf_vs_lstm,
+            "vs ES": p_esdf_vs_es
+        }
+
+    print("\n=== Interannual significance (paired Wilcoxon signed-rank test) ===")
+    for year, res in p_results.items():
+        print(f"\nYear {year}")
+        for k, p in res.items():
+            sig = "significant" if p < 0.05 else "not significant"
+            print(f"ESDF {k}: p = {p:.4e}, {sig}")
+
+    # =========================
+    # 5. Plot
+    # =========================
+    fig, ax = plt.subplots(figsize=(9, 5))
+
+    # Morandi-style colors consistent with the uploaded figure
+    color_lstm = "#0468BFFF"
+    color_es = "#F27127FF"
+    color_esdf = "#46AEA0FF"
+
+    fill_lstm = "#DCEAF6"
+    fill_es = "#FBE7E1"
+    fill_esdf = "#DCEDEB"
+
+    years = ["2021", "2022", "2023"]
+    group_centers = [1, 2, 3]
+    offsets = [-0.24, 0.0, 0.24]
+    width = 0.18
+
+    all_vals = []
+
+    for i, year in enumerate(years):
+        center = group_centers[i]
+        methods = ["LSTM", "LSTM+ES", "LSTM+ESDF"]
+
+        for j, method in enumerate(methods):
+            pos = center + offsets[j]
+            vals = np.asarray(plot_data[year][method], dtype=float)
+            vals = vals[~np.isnan(vals)]
+            all_vals.extend(vals.tolist())
+
+            facecolor = {
+                "LSTM": fill_lstm,
+                "LSTM+ES": fill_es,
+                "LSTM+ESDF": fill_esdf
+            }[method]
+
+            edgecolor = {
+                "LSTM": color_lstm,
+                "LSTM+ES": color_es,
+                "LSTM+ESDF": color_esdf
+            }[method]
+
+            ax.boxplot(
+                vals,
+                positions=[pos],
+                widths=width,
+                patch_artist=True,
+                showfliers=False,
+                whis=1.5,
+                boxprops=dict(facecolor=facecolor, edgecolor=edgecolor, linewidth=1.6),
+                whiskerprops=dict(color=edgecolor, linewidth=1.5),
+                capprops=dict(color=edgecolor, linewidth=1.5),
+                medianprops=dict(color=edgecolor, linewidth=1.8),
+            )
+
+            # scatter points
+            jitter = np.random.normal(0, 0.018, size=len(vals))
+            ax.scatter(
+                np.full(len(vals), pos) + jitter,
+                vals,
+                s=22,
+                color=edgecolor,
+                alpha=0.55,
+                edgecolors='none',
+                zorder=3
+            )
+
+    # =========================
+    # 6. Axis style
+    # =========================
+    all_vals = np.asarray(all_vals, dtype=float)
+    ymin, ymax = np.nanmin(all_vals), np.nanmax(all_vals)
+    yrange = ymax - ymin
+
+    ax.set_xlim(0.5, 3.5)
+    ax.set_ylim(ymin - 0.08 * yrange, ymax + 0.5 * yrange)
+
+    ax.set_xticks(group_centers)
+    ax.set_xticklabels(years)
+    ax.set_xlabel("Year")
+    ax.set_ylabel("nMAE")
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.tick_params(width=1.2, length=5)
+    ax.spines['left'].set_linewidth(1.2)
+    ax.spines['bottom'].set_linewidth(1.2)
+
+    # legend
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], color=color_lstm, lw=2, marker='s', markersize=8,
+               markerfacecolor=fill_lstm, label='LSTM'),
+        Line2D([0], [0], color=color_es, lw=2, marker='s', markersize=8,
+               markerfacecolor=fill_es, label='LSTM+ES'),
+        Line2D([0], [0], color=color_esdf, lw=2, marker='s', markersize=8,
+               markerfacecolor=fill_esdf, label='LSTM+ESDF'),
+    ]
+    ax.legend(handles=legend_elements, frameon=False, loc='upper center', ncol=3)
+
+    # =========================
+    # 7. p-value annotations
+    # =========================
+    def add_sig_text(ax, x0, y0, text_top, text_bottom,
+                     color_top, color_bottom,
+                     ha='center', x_shift=0.0, line_gap=0.095):
+        ax.text(
+            x0 + x_shift, y0,
+            text_top, ha=ha, va='bottom',
+            fontsize=font_size - 3, color=color_top
+        )
+        ax.text(
+            x0 + x_shift, y0 - line_gap * yrange,
+            text_bottom, ha=ha, va='bottom',
+            fontsize=font_size - 3, color=color_bottom
+        )
+
+    for i, year in enumerate(years):
+        center = group_centers[i]
+        year_vals = np.concatenate([
+            plot_data[year]["LSTM"],
+            plot_data[year]["LSTM+ES"],
+            plot_data[year]["LSTM+ESDF"]
+        ])
+        year_vals = year_vals[~np.isnan(year_vals)]
+        local_max = np.max(year_vals)
+
+        p1 = p_results[year]["vs LSTM"]
+        p2 = p_results[year]["vs ES"]
+
+        text_top = f"{p_to_text(p1)} vs. LSTM"
+        text_bottom = f"{p_to_text(p2)} vs. LSTM+ES"
+
+        if year == "2021":
+            add_sig_text(
+                ax, center, local_max + 0.17 * yrange,
+                text_top, text_bottom,
+                color_top=color_lstm, color_bottom=color_es,
+                ha='center', x_shift=0, line_gap=0.10
+            )
+        else:
+            add_sig_text(
+                ax, center, local_max + 0.17 * yrange,
+                text_top, text_bottom,
+                color_top=color_lstm, color_bottom=color_es,
+                ha='center', x_shift=0.0, line_gap=0.10
+            )
+
+    plt.tight_layout()
+    #plt.savefig('figures/interannual_analysis.pdf')
+    plt.savefig("source_figure_storage/figure_6_c.svg", bbox_inches="tight")
+    plt.show()
+
+
+#plot_interannual_generalization()
+
 
 ##Fig. s1
 ###(The following three functions are only for data processing)
@@ -3804,7 +4876,7 @@ def save_extreme_ramping_rate():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3812,7 +4884,7 @@ def save_extreme_ramping_rate():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3856,7 +4928,7 @@ def save_extreme_ramping_rate():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3864,7 +4936,7 @@ def save_extreme_ramping_rate():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3909,7 +4981,7 @@ def save_extreme_ramping_rate():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3917,7 +4989,7 @@ def save_extreme_ramping_rate():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3964,7 +5036,7 @@ def save_extreme_ramping_rate():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -3972,7 +5044,7 @@ def save_extreme_ramping_rate():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4012,16 +5084,17 @@ def save_extreme_ramping_rate():
                            usecols=['Date_Hour', 'Load', 'Temperature'])
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  
-            hour = int(parts[-1])  
+            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
+            hour = int(parts[-1])  # 获取小时部分并转换为整数
 
+            # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  
-                return parts[0] + f'/{new_hour:02d}'  
+                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
+                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  
+            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -4040,7 +5113,7 @@ def save_extreme_ramping_rate():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4048,7 +5121,7 @@ def save_extreme_ramping_rate():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4093,7 +5166,7 @@ def save_extreme_ramping_rate():
         end_date = pd.to_datetime('2023/09/30/23')
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  
+        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
 
         load = np.array(data['load'])
         load = (load - min(load)) / (max(load) - min(load))
@@ -4106,7 +5179,7 @@ def save_extreme_ramping_rate():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4114,7 +5187,7 @@ def save_extreme_ramping_rate():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4137,7 +5210,7 @@ def save_extreme_ramping_rate():
     data = {
         'Group': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
-                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),   
+                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),   # 三个组
         'Value': EU_common_rr+GD_common_rr+ID_common_rr+texas_common_rr+PJM_common_rr+
                  HN_common_rr,
         'HUE': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
@@ -4149,7 +5222,7 @@ def save_extreme_ramping_rate():
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
                  ['India'] * len(ID_heatwave_rr) + ['Texas'] * len(texas_heatwave_rr) +
-                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr), 
+                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  # 三个组
         'Value': EU_coldwave_rr + GD_heatwave_rr + ID_heatwave_rr + texas_heatwave_rr + PJM_heatwave_rr +
                  HN_coldwave_rr,
         'HUE': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4184,7 +5257,7 @@ def save_extreme_values():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4192,7 +5265,7 @@ def save_extreme_values():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4234,7 +5307,7 @@ def save_extreme_values():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4242,7 +5315,7 @@ def save_extreme_values():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4285,7 +5358,7 @@ def save_extreme_values():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4293,7 +5366,7 @@ def save_extreme_values():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4338,7 +5411,7 @@ def save_extreme_values():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4346,7 +5419,7 @@ def save_extreme_values():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4384,16 +5457,17 @@ def save_extreme_values():
                            usecols=['Date_Hour', 'Load', 'Temperature'])
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  
-            hour = int(parts[-1])  
+            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
+            hour = int(parts[-1])  # 获取小时部分并转换为整数
 
+            # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  
-                return parts[0] + f'/{new_hour:02d}'  
+                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
+                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  
+            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -4412,7 +5486,7 @@ def save_extreme_values():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4420,7 +5494,7 @@ def save_extreme_values():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4463,7 +5537,7 @@ def save_extreme_values():
         end_date = pd.to_datetime('2023/09/30/23')
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  
+        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
 
         load = np.array(data['load'])
         load = (load - min(load)) / (max(load) - min(load))
@@ -4476,7 +5550,7 @@ def save_extreme_values():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4484,7 +5558,7 @@ def save_extreme_values():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4517,7 +5591,7 @@ def save_extreme_values():
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
                  ['India'] * len(ID_heatwave_rr) + ['Texas'] * len(texas_heatwave_rr) +
-                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  
+                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  # 三个组
         'Value': EU_coldwave_rr + GD_heatwave_rr + ID_heatwave_rr + texas_heatwave_rr + PJM_heatwave_rr +
                  HN_coldwave_rr,
         'HUE': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4552,7 +5626,7 @@ def save_extreme_energy():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4560,7 +5634,7 @@ def save_extreme_energy():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4608,7 +5682,7 @@ def save_extreme_energy():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4616,7 +5690,7 @@ def save_extreme_energy():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4661,7 +5735,7 @@ def save_extreme_energy():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4669,7 +5743,7 @@ def save_extreme_energy():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4716,7 +5790,7 @@ def save_extreme_energy():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4724,7 +5798,7 @@ def save_extreme_energy():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4764,17 +5838,17 @@ def save_extreme_energy():
                            usecols=['Date_Hour', 'Load', 'Temperature'])
 
         def replace_hour(date_hour_str):
-            parts = date_hour_str.rsplit('/', 1)  
-            hour = int(parts[-1])  
+            parts = date_hour_str.rsplit('/', 1)  # 从右侧分割，最多分割一次
+            hour = int(parts[-1])  # 获取小时部分并转换为整数
 
             # 如果小时在 1 到 24 之间，递减小时
             if 1 <= hour <= 24:
-                new_hour = (hour - 1) if hour != 1 else 0  
-                return parts[0] + f'/{new_hour:02d}' 
+                new_hour = (hour - 1) if hour != 1 else 0  # 如果小时为 1，则替换为 0
+                return parts[0] + f'/{new_hour:02d}'  # 格式化为两位数
             if hour == 25:
                 new_hour = 23
                 return parts[0] + f'/{new_hour:02d}'
-            return date_hour_str  
+            return date_hour_str  # 如果没有找到有效的小时，返回原字符串
 
         data['Date_Hour'] = data['Date_Hour'].apply(replace_hour)
 
@@ -4793,7 +5867,7 @@ def save_extreme_energy():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4801,7 +5875,7 @@ def save_extreme_energy():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4846,7 +5920,7 @@ def save_extreme_energy():
         end_date = pd.to_datetime('2023/09/30/23')
         data = data[(pd.to_datetime(data['Date']) >= start_date) & (pd.to_datetime(data['Date']) <= end_date)]
 
-        data['Date'] = pd.to_datetime(data['Date'])  
+        data['Date'] = pd.to_datetime(data['Date'])  # 确保 Data_Hour 列为 datetime 类型
 
         load = np.array(data['load'])
         load = (load - min(load)) / (max(load) - min(load))
@@ -4859,7 +5933,7 @@ def save_extreme_energy():
 
         # define the coldwave index
         T_05 = np.percentile(T_i_list, 5)
-        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_05
+        ECI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_05
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         ECI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4867,7 +5941,7 @@ def save_extreme_energy():
 
         # define the heatwave index
         T_95 = np.percentile(T_i_list, 95)
-        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - T_95
+        EHI_sig = np.array([np.mean(T_i_list[i + 30:i + 30 + 1]) - T_95
                             for i in range(T_i_list.shape[0] - 3 - 30)])
         EHI_accl = np.array([np.mean(T_i_list[i + 30:i + 30 + 3]) - np.mean(T_i_list[i:i + 30])
                              for i in range(T_i_list.shape[0] - 3 - 30)])
@@ -4890,7 +5964,7 @@ def save_extreme_energy():
     data = {
         'Group': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
                  ['India']*len(ID_common_rr)+['Texas']*len(texas_common_rr)+
-                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),  
+                 ['PJM']*len(PJM_common_rr)+['Hunan']*len(HN_common_rr),   # 三个组
         'Value': EU_common_rr+GD_common_rr+ID_common_rr+texas_common_rr+PJM_common_rr+
                  HN_common_rr,
         'HUE': ['EU']*len(EU_common_rr)+['GD']*len(GD_common_rr)+
@@ -4902,7 +5976,7 @@ def save_extreme_energy():
     data = {
         'Group': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
                  ['India'] * len(ID_heatwave_rr) + ['Texas'] * len(texas_heatwave_rr) +
-                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  
+                 ['PJM'] * len(PJM_heatwave_rr) + ['Hunan'] * len(HN_coldwave_rr),  # 三个组
         'Value': EU_coldwave_rr + GD_heatwave_rr + ID_heatwave_rr + texas_heatwave_rr + PJM_heatwave_rr +
                  HN_coldwave_rr,
         'HUE': ['EU'] * len(EU_coldwave_rr) + ['GD'] * len(GD_heatwave_rr) +
@@ -4912,9 +5986,48 @@ def save_extreme_energy():
     df = pd.DataFrame(data)
     df.to_excel('temporary_maintained_data/energy_extreme.xlsx', index=False)
 
+
+def save_violin_source_data():
+    os.makedirs("temporary_maintained_data", exist_ok=True)
+
+    x_labels = ['EU', 'GD', 'India', 'Texas', 'PJM', 'HN']
+
+    file_info = [
+        ("ramping_common.xlsx", "Ramping Rate", "Common"),
+        ("ramping_extreme.xlsx", "Ramping Rate", "Extreme"),
+        ("extreme_values_common.xlsx", "Maximum Value", "Common"),
+        ("extreme_values_extreme.xlsx", "Maximum Value", "Extreme"),
+        ("energy_common.xlsx", "Energy", "Common"),
+        ("energy_extreme.xlsx", "Energy", "Extreme"),
+    ]
+
+    source_data = {}
+
+    for file_name, metric_name, condition_name in file_info:
+        df = pd.read_excel(file_name)
+
+        groups = df["Group"].unique()
+
+        for i, group in enumerate(groups):
+            region_name = x_labels[i]
+
+            values = df.loc[df["Group"] == group, "Value"].dropna().reset_index(drop=True)
+
+            column_name = f"{region_name}_{metric_name}_{condition_name}"
+            source_data[column_name] = values
+
+    source_df = pd.DataFrame(source_data)
+
+    output_path = "temporary_maintained_data/load_pattern_change_source_data.xlsx"
+    source_df.to_excel(output_path, index=False)
+
+    print(f"Saved source data to {output_path}")
+
 #save_extreme_ramping_rate()
 #save_extreme_values()
 #save_extreme_energy()
+#save_violin_source_data()
+
 
 ###(This function is for plotting)
 def plot_extreme_boxes_2():
@@ -4922,20 +6035,30 @@ def plot_extreme_boxes_2():
     plt.rcParams['ytick.direction'] = 'in'
 
     fig, ax = plt.subplots(3, 1, figsize=(6, 6))
+
+    # 自定义图例元素
+    legend_elements = [
+        Line2D([0], [0], color='black', lw=2, linestyle='--', label='Extreme'),
+        Line2D([0], [0], color='black', lw=2, linestyle='-', label='Common')
+    ]
+
+    # 比如加在第一个子图上
+    ax[0].legend(handles=legend_elements, loc='upper right', frameon=False, ncols=2)
+
     custom_palette = ['#A8CDECFF', '#F6955EFF', 'peru',
                       '#9B6981FF', '#7887A4FF', '#A89F8EFF']  # 示例颜色，替换成你的调色板
 
     ### ramping_common
-    df = pd.read_excel('ramping_common.xlsx')
+    df = pd.read_excel('temporary_maintained_data/ramping_common.xlsx')
 
-    # Group data by Group and HUE
+    # 按 Group 和 HUE 分组数据
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
 
-    # store violin data
+    # 存储 violin 数据
     violin_data = []
     positions = []
     colors = []
@@ -4945,50 +6068,50 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  
+            if len(values) > 0:  # 只添加非空数据
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  
+        pos += 1  # 增加间距
 
     #print(violin_data)
 
-    # violinplot
+    # 绘制 violinplot
     violins = ax[0].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  
-        showmedians=False,  
-        quantiles=None,  
-        widths=0.8,  
+        showmeans=True,  # 显示均值（代替 inner='quartile'）
+        showmedians=False,  # 不显示中位数
+        quantiles=None,  # 不显示分位数
+        widths=0.8,  # 调整宽度
     )
 
-    violins['cmeans'].set_color('black')  
-    violins['cmeans'].set_linewidth(1)  
+    violins['cmeans'].set_color('black')  # 均值线颜色
+    violins['cmeans'].set_linewidth(1)  # 线宽
     violins['cmeans'].set_linestyle('-')
 
-
+    # 设置颜色和样式
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(1)  
-        pc.set_linestyle('-')  
-        pc.set_linewidth(0.8)  
+        pc.set_alpha(1)  # 透明度
+        pc.set_linestyle('-')  # 线型
+        pc.set_linewidth(0.8)  # 线宽
 
 
     ######### ramping_extreme
-    df = pd.read_excel('ramping_extreme.xlsx')
+    df = pd.read_excel('temporary_maintained_data/ramping_extreme.xlsx')
 
-    # Group data by Group and HUE
+    # 按 Group 和 HUE 分组数据
     groups = df['Group'].unique()
     hues = df['HUE'].unique()
     print("Group 类别:", df['Group'].unique())
     print("HUE 类别:", df['HUE'].unique())
 
-
+    # 存储 violin 数据
     violin_data = []
     positions = []
     colors = []
@@ -4998,252 +6121,253 @@ def plot_extreme_boxes_2():
         for j, hue in enumerate(hues):
             subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
             values = subset['Value'].dropna().values
-            if len(values) > 0:  
+            if len(values) > 0:  # 只添加非空数据
                 violin_data.append(values)
                 positions.append(pos)
                 colors.append(custom_palette[j])
                 pos += 1
-        pos += 1  
+        pos += 1  # 增加间距
 
     # print(violin_data)
 
-
+    # 绘制 violinplot
     violins = ax[0].violinplot(
         violin_data,
         positions=positions,
         bw_method="silverman",
         showextrema=False,
-        showmeans=True,  
-        showmedians=False,  
-        quantiles=None,  
-        widths=0.8,  
+        showmeans=True,  # 显示均值（代替 inner='quartile'）
+        showmedians=False,  # 不显示中位数
+        quantiles=None,  # 不显示分位数
+        widths=0.8,  # 调整宽度
     )
 
-    violins['cmeans'].set_color('black') 
-    violins['cmeans'].set_linewidth(1)  
-    violins['cmeans'].set_linestyle('--')
-
-
-    for i, pc in enumerate(violins['bodies']):
-        pc.set_facecolor(colors[i])
-        pc.set_edgecolor('black')
-        pc.set_alpha(0.5)  
-        pc.set_linestyle('--')  
-        pc.set_linewidth(0.8)  
-
-
-
-
-
-    ### extreme_values_common
-    df = pd.read_excel('extreme_values_common.xlsx')
-
-    # Group data by Group and HUE
-    groups = df['Group'].unique()
-    hues = df['HUE'].unique()
-    print("Group 类别:", df['Group'].unique())
-    print("HUE 类别:", df['HUE'].unique())
-
-    violin_data = []
-    positions = []
-    colors = []
-
-    pos = 1
-    for i, group in enumerate(groups):
-        for j, hue in enumerate(hues):
-            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
-            values = subset['Value'].dropna().values
-            if len(values) > 0:  
-                violin_data.append(values)
-                positions.append(pos)
-                colors.append(custom_palette[j])
-                pos += 1
-        pos += 1  
-
-    # print(violin_data)
-
-
-    violins = ax[1].violinplot(
-        violin_data,
-        positions=positions,
-        bw_method="silverman",
-        showextrema=False,
-        showmeans=True,  
-        showmedians=False,  
-        quantiles=None,  
-        widths=0.8, 
-    )
-
-    violins['cmeans'].set_color('black')  
-    violins['cmeans'].set_linewidth(1)  
-    violins['cmeans'].set_linestyle('-')
-
-
-    for i, pc in enumerate(violins['bodies']):
-        pc.set_facecolor(colors[i])
-        pc.set_edgecolor('black')
-        pc.set_alpha(1)  
-        pc.set_linestyle('-')  
-        pc.set_linewidth(0.8)  
-
-    ######### extreme_values_extreme
-    df = pd.read_excel('extreme_values_extreme.xlsx')
-
-    # Group data by Group and HUE
-    groups = df['Group'].unique()
-    hues = df['HUE'].unique()
-    print("Group 类别:", df['Group'].unique())
-    print("HUE 类别:", df['HUE'].unique())
-
-
-    violin_data = []
-    positions = []
-    colors = []
-
-    pos = 1
-    for i, group in enumerate(groups):
-        for j, hue in enumerate(hues):
-            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
-            values = subset['Value'].dropna().values
-            if len(values) > 0:  
-                violin_data.append(values)
-                positions.append(pos)
-                colors.append(custom_palette[j])
-                pos += 1
-        pos += 1  
-
-    # print(violin_data)
-
-
-    violins = ax[1].violinplot(
-        violin_data,
-        positions=positions,
-        bw_method="silverman",
-        showextrema=False,
-        showmeans=True,  
-        showmedians=False,  
-        quantiles=None,  
-        widths=0.8,  
-    )
-
-    violins['cmeans'].set_color('black')  
-    violins['cmeans'].set_linewidth(1)  
-    violins['cmeans'].set_linestyle('--')
-
-
-    for i, pc in enumerate(violins['bodies']):
-        pc.set_facecolor(colors[i])
-        pc.set_edgecolor('black')
-        pc.set_alpha(0.5) 
-        pc.set_linestyle('--')  
-        pc.set_linewidth(0.8)  
-
-
-
-
-    ### energy_common
-    df = pd.read_excel('energy_common.xlsx')
-
-    # Group data by Group and HUE
-    groups = df['Group'].unique()
-    hues = df['HUE'].unique()
-    print("Group 类别:", df['Group'].unique())
-    print("HUE 类别:", df['HUE'].unique())
-
-
-    violin_data = []
-    positions = []
-    colors = []
-
-    pos = 1
-    for i, group in enumerate(groups):
-        for j, hue in enumerate(hues):
-            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
-            values = subset['Value'].dropna().values
-            if len(values) > 0:  
-                violin_data.append(values)
-                positions.append(pos)
-                colors.append(custom_palette[j])
-                pos += 1
-        pos += 1  
-
-    # print(violin_data)
-
-
-    violins = ax[2].violinplot(
-        violin_data,
-        positions=positions,
-        bw_method="silverman",
-        showextrema=False,
-        showmeans=True, 
-        showmedians=False,  
-        quantiles=None,  
-        widths=0.8,  
-    )
-
-    violins['cmeans'].set_color('black') 
-    violins['cmeans'].set_linewidth(1)  
-    violins['cmeans'].set_linestyle('-')
-
-
-    for i, pc in enumerate(violins['bodies']):
-        pc.set_facecolor(colors[i])
-        pc.set_edgecolor('black')
-        pc.set_alpha(1)  
-        pc.set_linestyle('-')  
-        pc.set_linewidth(0.8)  
-
-    ######### energy_extreme
-    df = pd.read_excel('energy_extreme.xlsx')
-
-    # Group data by Group and HUE
-    groups = df['Group'].unique()
-    hues = df['HUE'].unique()
-    print("Group 类别:", df['Group'].unique())
-    print("HUE 类别:", df['HUE'].unique())
-
-
-    violin_data = []
-    positions = []
-    colors = []
-
-    pos = 1
-    for i, group in enumerate(groups):
-        for j, hue in enumerate(hues):
-            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
-            values = subset['Value'].dropna().values
-            if len(values) > 0:  
-                violin_data.append(values)
-                positions.append(pos)
-                colors.append(custom_palette[j])
-                pos += 1
-        pos += 1  
-
-    # print(violin_data)
-
-
-    violins = ax[2].violinplot(
-        violin_data,
-        positions=positions,
-        bw_method="silverman",
-        showextrema=False,
-        showmeans=True,  
-        showmedians=False,  
-        quantiles=None,  
-        widths=0.8,  
-    )
-
-    violins['cmeans'].set_color('black')  
-    violins['cmeans'].set_linewidth(1)  
+    violins['cmeans'].set_color('black')  # 均值线颜色
+    violins['cmeans'].set_linewidth(1)  # 线宽
     violins['cmeans'].set_linestyle('--')
 
     # 设置颜色和样式
     for i, pc in enumerate(violins['bodies']):
         pc.set_facecolor(colors[i])
         pc.set_edgecolor('black')
-        pc.set_alpha(0.5)  
-        pc.set_linestyle('--') 
-        pc.set_linewidth(0.8)  
+        pc.set_alpha(0.5)  # 透明度
+        pc.set_linestyle('--')  # 线型
+        pc.set_linewidth(0.8)  # 线宽
+
+
+
+
+
+    ### extreme_values_common
+    df = pd.read_excel('temporary_maintained_data/extreme_values_common.xlsx')
+
+    # 按 Group 和 HUE 分组数据
+    groups = df['Group'].unique()
+    hues = df['HUE'].unique()
+    print("Group 类别:", df['Group'].unique())
+    print("HUE 类别:", df['HUE'].unique())
+
+    # 存储 violin 数据
+    violin_data = []
+    positions = []
+    colors = []
+
+    pos = 1
+    for i, group in enumerate(groups):
+        for j, hue in enumerate(hues):
+            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
+            values = subset['Value'].dropna().values
+            if len(values) > 0:  # 只添加非空数据
+                violin_data.append(values)
+                positions.append(pos)
+                colors.append(custom_palette[j])
+                pos += 1
+        pos += 1  # 增加间距
+
+    # print(violin_data)
+
+    # 绘制 violinplot
+    violins = ax[1].violinplot(
+        violin_data,
+        positions=positions,
+        bw_method="silverman",
+        showextrema=False,
+        showmeans=True,  # 显示均值（代替 inner='quartile'）
+        showmedians=False,  # 不显示中位数
+        quantiles=None,  # 不显示分位数
+        widths=0.8,  # 调整宽度
+    )
+
+    violins['cmeans'].set_color('black')  # 均值线颜色
+    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_linestyle('-')
+
+    # 设置颜色和样式
+    for i, pc in enumerate(violins['bodies']):
+        pc.set_facecolor(colors[i])
+        pc.set_edgecolor('black')
+        pc.set_alpha(1)  # 透明度
+        pc.set_linestyle('-')  # 线型
+        pc.set_linewidth(0.8)  # 线宽
+
+    ######### extreme_values_extreme
+    df = pd.read_excel('temporary_maintained_data/extreme_values_extreme.xlsx')
+
+    # 按 Group 和 HUE 分组数据
+    groups = df['Group'].unique()
+    hues = df['HUE'].unique()
+    print("Group 类别:", df['Group'].unique())
+    print("HUE 类别:", df['HUE'].unique())
+
+    # 存储 violin 数据
+    violin_data = []
+    positions = []
+    colors = []
+
+    pos = 1
+    for i, group in enumerate(groups):
+        for j, hue in enumerate(hues):
+            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
+            values = subset['Value'].dropna().values
+            if len(values) > 0:  # 只添加非空数据
+                violin_data.append(values)
+                positions.append(pos)
+                colors.append(custom_palette[j])
+                pos += 1
+        pos += 1  # 增加间距
+
+    # print(violin_data)
+
+    # 绘制 violinplot
+    violins = ax[1].violinplot(
+        violin_data,
+        positions=positions,
+        bw_method="silverman",
+        showextrema=False,
+        showmeans=True,  # 显示均值（代替 inner='quartile'）
+        showmedians=False,  # 不显示中位数
+        quantiles=None,  # 不显示分位数
+        widths=0.8,  # 调整宽度
+    )
+
+    violins['cmeans'].set_color('black')  # 均值线颜色
+    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_linestyle('--')
+
+    # 设置颜色和样式
+    for i, pc in enumerate(violins['bodies']):
+        pc.set_facecolor(colors[i])
+        pc.set_edgecolor('black')
+        pc.set_alpha(0.5)  # 透明度
+        pc.set_linestyle('--')  # 线型
+        pc.set_linewidth(0.8)  # 线宽
+
+
+
+
+    ### energy_common
+    df = pd.read_excel('temporary_maintained_data/energy_common.xlsx')
+
+    # 按 Group 和 HUE 分组数据
+    groups = df['Group'].unique()
+    hues = df['HUE'].unique()
+    print("Group 类别:", df['Group'].unique())
+    print("HUE 类别:", df['HUE'].unique())
+
+    # 存储 violin 数据
+    violin_data = []
+    positions = []
+    colors = []
+
+    pos = 1
+    for i, group in enumerate(groups):
+        for j, hue in enumerate(hues):
+            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
+            values = subset['Value'].dropna().values
+            if len(values) > 0:  # 只添加非空数据
+                violin_data.append(values)
+                positions.append(pos)
+                colors.append(custom_palette[j])
+                pos += 1
+        pos += 1  # 增加间距
+
+    # print(violin_data)
+
+    # 绘制 violinplot
+    violins = ax[2].violinplot(
+        violin_data,
+        positions=positions,
+        bw_method="silverman",
+        showextrema=False,
+        showmeans=True,  # 显示均值（代替 inner='quartile'）
+        showmedians=False,  # 不显示中位数
+        quantiles=None,  # 不显示分位数
+        widths=0.8,  # 调整宽度
+    )
+
+    violins['cmeans'].set_color('black')  # 均值线颜色
+    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_linestyle('-')
+
+    # 设置颜色和样式
+    for i, pc in enumerate(violins['bodies']):
+        pc.set_facecolor(colors[i])
+        pc.set_edgecolor('black')
+        pc.set_alpha(1)  # 透明度
+        pc.set_linestyle('-')  # 线型
+        pc.set_linewidth(0.8)  # 线宽
+
+    ######### energy_extreme
+    df = pd.read_excel('temporary_maintained_data/energy_extreme.xlsx')
+
+    # 按 Group 和 HUE 分组数据
+    groups = df['Group'].unique()
+    hues = df['HUE'].unique()
+    print("Group 类别:", df['Group'].unique())
+    print("HUE 类别:", df['HUE'].unique())
+
+    # 存储 violin 数据
+    violin_data = []
+    positions = []
+    colors = []
+
+    pos = 1
+    for i, group in enumerate(groups):
+        for j, hue in enumerate(hues):
+            subset = df[(df['Group'] == group) & (df['HUE'] == hue)]
+            values = subset['Value'].dropna().values
+            if len(values) > 0:  # 只添加非空数据
+                violin_data.append(values)
+                positions.append(pos)
+                colors.append(custom_palette[j])
+                pos += 1
+        pos += 1  # 增加间距
+
+    # print(violin_data)
+
+    # 绘制 violinplot
+    violins = ax[2].violinplot(
+        violin_data,
+        positions=positions,
+        bw_method="silverman",
+        showextrema=False,
+        showmeans=True,  # 显示均值（代替 inner='quartile'）
+        showmedians=False,  # 不显示中位数
+        quantiles=None,  # 不显示分位数
+        widths=0.8,  # 调整宽度
+    )
+
+    violins['cmeans'].set_color('black')  # 均值线颜色
+    violins['cmeans'].set_linewidth(1)  # 线宽
+    violins['cmeans'].set_linestyle('--')
+
+    # 设置颜色和样式
+    for i, pc in enumerate(violins['bodies']):
+        pc.set_facecolor(colors[i])
+        pc.set_edgecolor('black')
+        pc.set_alpha(0.5)  # 透明度
+        pc.set_linestyle('--')  # 线型
+        pc.set_linewidth(0.8)  # 线宽
 
 
 
@@ -5265,7 +6389,7 @@ def plot_extreme_boxes_2():
 
 
     for i in range(3):
-        ax[i].set_xticks([1, 3, 5, 7, 9, 11])  
+        ax[i].set_xticks([1, 3, 5, 7, 9, 11])  # 设置刻度位置
         ax[i].tick_params(axis='x', which='major', length=0)
         ax[i].set_xticklabels(x_labels)
         ax[i].minorticks_on()
@@ -5273,14 +6397,16 @@ def plot_extreme_boxes_2():
         ax[i].tick_params(axis='x', which='minor', length=5)
 
     fig.suptitle('Load Patterns Change During Heatwaves and Coldwaves', y=0.94)
+
     plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig('source_figure_storage/figure_s1.pdf')
     plt.show()
 
 #plot_extreme_boxes_2()
 
 
 ##Fig. s2
-def plot_convergence_curve(titlesize=12, ticksize=12, labelsize=12, zoomx1=60, xlim=-0.1, tlim=0.45):
+def plot_convergence_curve(titlesize=18, ticksize=16, labelsize=16, zoomx1=60, xlim=-0.1, tlim=0.45):
 
     region_list = ['', '_Guangdong', '_hunan', '_India', '_Texas']
     color1 = '#699ECA'
@@ -5343,6 +6469,7 @@ def plot_convergence_curve(titlesize=12, ticksize=12, labelsize=12, zoomx1=60, x
     #convergence_lists_CNN = np.array(convergence_lists_CNN)
 
     fig, ax = plt.subplots(1, 3, figsize=(16, 4.5))
+    plt.subplots_adjust(wspace=1)
 
     flatten_ANN = [item for sublist in convergence_lists_ANN for item in sublist]
     flatten_LSTM = [item for sublist in convergence_lists_LSTM for item in sublist]
@@ -5378,8 +6505,8 @@ def plot_convergence_curve(titlesize=12, ticksize=12, labelsize=12, zoomx1=60, x
         ax[i].yaxis.set_tick_params(labelsize=ticksize)
 
         ax[i].legend(loc='upper center',
-               bbox_to_anchor=(0.25, 1),  
-               ncol=1,  
+               bbox_to_anchor=(0.25, 1),  # 调整垂直位置
+               ncol=1,  # 设置列数以水平排列
                fontsize=ticksize,
                frameon=False)
 
@@ -5425,15 +6552,26 @@ def plot_convergence_curve(titlesize=12, ticksize=12, labelsize=12, zoomx1=60, x
         ax[i].set_ylim(-0.2, 6)
         ax[i].margins(x=0)
 
+    # 创建不同的DataFrame（保持原始长度）
+    df_basic = pd.DataFrame({'MLP': np.mean(np.array(flatten_ANN), axis=0)})
+    df_rd = pd.DataFrame({'LSTM': np.mean(np.array(flatten_LSTM), axis=0)})
+    df_proposed = pd.DataFrame({'CNN': np.mean(np.array(flatten_CNN), axis=0)})
+
+    # 保存到同一个Excel的不同sheet
+    with pd.ExcelWriter('RD_convergence.xlsx', engine='openpyxl') as writer:
+        df_basic.to_excel(writer, sheet_name='MLP', index=False)
+        df_rd.to_excel(writer, sheet_name='LSTM', index=False)
+        df_proposed.to_excel(writer, sheet_name='CNN', index=False)
+
     plt.tight_layout()
-    plt.savefig('figures/RD_convergence.pdf')
+    plt.savefig('source_figure_storage/figure_s2.pdf')
     plt.show()
 
 
 #plot_convergence_curve()
 
 ##Fig. s3
-def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
+def plot_ratio_generation(titlesize=18, ticksize=14, labelsize=14):
 
     ratio_list = ['0', '0.1', '0.25', '0.5', '0.75', '1']
     region_list = ['欧洲', '广东', '德州', 'PJM', '湖南', '印度']
@@ -5474,8 +6612,10 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
     color3 = '#008A89'
 
     fig = plt.figure(figsize=(16, 4.5))
+    plt.subplots_adjust(wspace=1)
 
-    gs = GridSpec(1, 4, width_ratios=[1.5, 2, 1.5, 2])  # 3:2:3:2
+    # 定义具体的宽度比例（可以根据需要调整）
+    gs = GridSpec(1, 4, width_ratios=[1.5, 2, 1.5, 2])  # 3:2:3:2的比例
 
 
 
@@ -5486,20 +6626,21 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
     ## ax1的散点图
-    colors = ['#FFB6C1', '#FF69B4', '#FF1493', '#DC143C', '#1976D2']  
-    # colors = ['#E3F2FD', '#90CAF9', '#42A5F5', '#1976D2']  
-    # colors = ['#E8F5E8', '#81C784', '#4CAF50', '#2E7D32']  
+    colors = ['#FFB6C1', '#FF69B4', '#FF1493', '#DC143C', '#1976D2']  # 粉色到红色渐变
+    # 或者使用其他颜色方案：
+    # colors = ['#E3F2FD', '#90CAF9', '#42A5F5', '#1976D2']  # 蓝色渐变
+    # colors = ['#E8F5E8', '#81C784', '#4CAF50', '#2E7D32']  # 绿色渐变
 
-    # Obtain the precision at ratio=0 as the x-axis data
+    # 获取 ratio=0 时的精度作为 x 轴数据
     x_data = result_list[0, :, :].flatten()  # ratio=0 的所有数据
 
-
+    # 为每个非零 ratio 创建散点
     scatters = []
     for i, ratio in enumerate(['0.1', '0.25', '0.5', '0.75', '1']):
-        ratio_idx = i + 1  
-        y_data = result_list[ratio_idx, :, :].flatten()  
+        ratio_idx = i + 1  # 在 ratio_list 中的索引
+        y_data = result_list[ratio_idx, :, :].flatten()  # 当前 ratio 的所有数据
 
-
+        # 绘制散点
         scatter = ax1.scatter(x_data, y_data,
                               c=colors[i],
                               alpha=0.7,
@@ -5512,7 +6653,7 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
     ax1.set_xlabel('nMAE without Synthetic Samples', fontsize=labelsize)
     ax1.set_ylabel('nMAE with Synthetic Samples', fontsize=labelsize)
 
-
+    # 添加对角线 (y=x) 作为参考
     min_val = min(result_list.min(), result_list.min())
     max_val = max(result_list.max(), result_list.max())
     ax1.plot([min_val, max_val], [min_val, max_val],
@@ -5523,7 +6664,7 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 
-
+    ## ax2的折线图
     avg_MLP = np.mean(result_list[:, :, 0], axis=1)
     max_MLP = np.max(result_list[:, :, 0], axis=1)
     min_MLP = np.min(result_list[:, :, 0], axis=1)
@@ -5555,8 +6696,8 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 
-    handles = scatters + [line1, line2, line3] 
-    labels = [h.get_label() for h in handles]  
+    handles = scatters + [line1, line2, line3]  # 所有线条的句柄
+    labels = [h.get_label() for h in handles]  # 对应的标签
 
     ax2.set_xlabel('Synthetic Samples Penetration Ratio', fontsize=labelsize)
     ax2.set_ylabel('nRMSE', fontsize=labelsize)
@@ -5565,15 +6706,15 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 
-    # ax3
-    x_data = result_list_rmse[0, :, :].flatten()  
+    # ax3的散点图
+    x_data = result_list_rmse[0, :, :].flatten()  # ratio=0 的所有数据
 
-
+    # 为每个非零 ratio 创建散点
     for i, ratio in enumerate(['0.1', '0.25', '0.5', '0.75', '1']):
-        ratio_idx = i + 1  
-        y_data = result_list_rmse[ratio_idx, :, :].flatten()  
+        ratio_idx = i + 1  # 在 ratio_list 中的索引
+        y_data = result_list_rmse[ratio_idx, :, :].flatten()  # 当前 ratio 的所有数据
 
-
+        # 绘制散点
         scatter = ax3.scatter(x_data, y_data,
                               c=colors[i],
                               alpha=0.7,
@@ -5586,13 +6727,13 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
     ax3.set_xlabel('nRMSE without Synthetic Samples', fontsize=labelsize)
     ax3.set_ylabel('nRMSE with Synthetic Samples', fontsize=labelsize)
 
-
+    # 添加对角线 (y=x) 作为参考
     min_val = min(result_list_rmse.min(), result_list_rmse.min())
     max_val = max(result_list_rmse.max(), result_list_rmse.max())
     ax3.plot([min_val, max_val], [min_val, max_val],
              'k--', alpha=0.5, linewidth=1, label='y=x')
 
-
+    # ax4的折线图
     avg_MLP = np.mean(result_list_rmse[:, :, 0], axis=1)
     max_MLP = np.max(result_list_rmse[:, :, 0], axis=1)
     min_MLP = np.min(result_list_rmse[:, :, 0], axis=1)
@@ -5632,13 +6773,15 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
     fig.legend(handles, labels, loc='upper center',
-               bbox_to_anchor=(0.5, 0.93),  
-               ncol=8,  
+               bbox_to_anchor=(0.5, 1),  # 调整垂直位置
+               ncol=8,  # 设置列数以水平排列
                fontsize=ticksize,
                frameon=False)
 
     # fig.subplots_adjust(top=0.95)
     plt.tight_layout(rect=[0, 0, 1, 0.85])
+
+    plt.savefig('source_figure_storage/figure_s3.pdf')
 
 
 
@@ -5650,7 +6793,7 @@ def plot_ratio_generation(titlesize=12, ticksize=12, labelsize=12):
 
 
 ##Fig. s4
-def ablation_on_classifier(country='Belgium', titlesize=12, ticksize=12, labelsize=12):
+def ablation_on_classifier(country='Belgium', titlesize=18, ticksize=14, labelsize=14):
     if country == 'Belgium':
         start_day = 14
         period = 15
@@ -5740,8 +6883,8 @@ def ablation_on_classifier(country='Belgium', titlesize=12, ticksize=12, labelsi
     ax.set_ylim(0, 1.05)
     ax.axvspan(120, 120 + 8 * 24, alpha=0.1, color='lightcoral')
     ax.legend(loc='upper center',
-              bbox_to_anchor=(0.75, 0.3),  
-              ncol=1,  
+              bbox_to_anchor=(0.75, 0.35),  # 调整垂直位置
+              ncol=1,  # 设置列数以水平排列
               fontsize=ticksize,
               frameon=True,
               edgecolor='black')
@@ -5755,16 +6898,19 @@ def ablation_on_classifier(country='Belgium', titlesize=12, ticksize=12, labelsi
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    plt.savefig('figures/{}_classifier_ablation.pdf'.format(country))
+    plt.tight_layout()
+    plt.savefig('source_figure_storage/figure_s4_{}.pdf'.format(country))
     plt.show()
 
+
 #ablation_on_classifier('France')
+#ablation_on_classifier('Belgium')
 
 
 
 
 ##Fig. s5
-def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsize=12):
+def ablation_on_constraints(country='Europe', titlesize=16, ticksize=14, labelsize=14):
     if country=='Europe':
         color=['#B3E5FC', '#81D4FA', '#4FC3F7', '#29B6F6' ]
         line_color='#0D47A1'
@@ -5786,54 +6932,56 @@ def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsi
 
     benchmark = pd.read_csv(
         'impact of constraints/{}_benchmark.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     no_ort = pd.read_csv(
         'impact of constraints/{}_no_ort.csv'.format(country),
-        skiprows=1 
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     no_sim = pd.read_csv(
         'impact of constraints/{}_no_sim.csv'.format(country),
-        skiprows=1 
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     proposed = pd.read_csv(
         'impact of constraints/{}_proposed.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
-
+    # 计算每组的统计量
     data_groups = [benchmark, no_ort, no_sim, proposed]
     group_names = ['no constraints', 'no orthogonal', 'no similarity', 'proposed']
 
     means = [np.mean(group) for group in data_groups]
 
+    print(means)
 
+    # 设置图形
     fig, ax = plt.subplots(1, 2, figsize=(15, 4))
     x_pos = np.arange(len(group_names))
     bar_width = 0.3
 
-
+    # 绘制柱状图（均值）
     bars = ax[0].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
 
     best_index = 3
-    # best marker
+    # 添加星星标记在最佳柱子上方
     ax[0].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
 
-    # Add horizontal dashed lines to indicate the optimal baseline
+    # 添加水平虚线表示最佳基准线
     ax[0].axhline(y=best_value, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
 
 
-
+    # 美化图形
     ax[0].set_ylim(min_ylim, max_ylim)
-    ax[0].set_xlabel('Settings', fontsize=12)
-    ax[0].set_ylabel('nMAE', fontsize=12)
-    ax[0].set_title('Ablation on Constraints in RD Network under {}'.format(weather), fontsize=14)
+    ax[0].set_xlabel('Settings', fontsize=ticksize)
+    ax[0].set_ylabel('nMAE', fontsize=ticksize)
+    ax[0].set_title('Ablation on Constraints in RD Network under {}'.format(weather), fontsize=titlesize)
     ax[0].set_xticks(x_pos)
     ax[0].set_xticklabels(group_names)
     ax[0].tick_params(axis='both', labelsize=labelsize)
@@ -5844,48 +6992,51 @@ def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsi
 
     benchmark = pd.read_csv(
         'impact of constraints/{}_benchmark.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 1].values
 
     no_ort = pd.read_csv(
         'impact of constraints/{}_no_ort.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 1].values
 
     no_sim = pd.read_csv(
         'impact of constraints/{}_no_sim.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 1].values
 
     proposed = pd.read_csv(
         'impact of constraints/{}_proposed.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 1].values
 
-
+    # 计算每组的统计量
     data_groups = [benchmark, no_ort, no_sim, proposed]
     group_names = ['no constraints', 'no orthogonal', 'no similarity', 'proposed']
 
     means = [np.mean(group) for group in data_groups]
 
+    print(means)
 
+
+    # 绘制柱状图（均值）
     bars = ax[1].bar(x_pos, means, bar_width, label='Mean',
                      color=color, alpha=0.7, edgecolor='black')
 
     best_index = 3
-    # best marker
+    # 添加星星标记在最佳柱子上方
     ax[1].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
 
-    # Add horizontal dashed lines to indicate the optimal baseline
+    # 添加水平虚线表示最佳基准线
     ax[1].axhline(y=best_value_rmse, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
 
-
+    # 美化图形
     ax[1].set_ylim(min_ylim+0.01, max_ylim+0.015)
-    ax[1].set_xlabel('Settings', fontsize=12)
-    ax[1].set_ylabel('nRMSE', fontsize=12)
-    ax[1].set_title('Ablation on Constraints in RD Network under {}'.format(weather), fontsize=14)
+    ax[1].set_xlabel('Settings', fontsize=ticksize)
+    ax[1].set_ylabel('nRMSE', fontsize=ticksize)
+    ax[1].set_title('Ablation on Constraints in RD Network under {}'.format(weather), fontsize=titlesize)
     ax[1].set_xticks(x_pos)
     ax[1].set_xticklabels(group_names)
     ax[1].tick_params(axis='both', labelsize=labelsize)
@@ -5896,7 +7047,7 @@ def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsi
 
 
     plt.tight_layout()
-    plt.savefig('figures/{}_constraints_ablation.pdf'.format(weather))
+    plt.savefig('source_figure_storage/figure_s5_{}.pdf'.format(weather))
     plt.show()
 
 #ablation_on_constraints('Europe')
@@ -5906,7 +7057,7 @@ def ablation_on_constraints(country='Europe', titlesize=12, ticksize=12, labelsi
 
 
 ##Fig. s6
-def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsize=12):
+def ablation_on_proportion(country='Europe', titlesize=16, ticksize=14, labelsize=14):
     if country=='Europe':
         color=['#fee3ce', '#eabaa1', '#dc917b', '#c44438', '#b7282e' ]
         line_color='#0D47A1'
@@ -5925,37 +7076,37 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
         best_value = 0.037093
         best_value_rmse = 0.0507373
 
-
+    # 设置图形
     fig, ax = plt.subplots(1, 2, figsize=(15, 4))
 
 
 
     p_1_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.1.csv'.format(country),
-        skiprows=1 
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     p_2_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.25.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     p_3_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.5.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     p_4_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.75.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
     p_5_mae = pd.read_csv(
         'impact of proportion_proposed/{}_1.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-2, 0].values
 
-
+    # 计算每组的统计量
     data_groups = [p_1_mae, p_2_mae, p_3_mae, p_4_mae, p_5_mae]
     group_names = ['0.10', '0.25', '0.50', '0.75', '1.00']
 
@@ -5964,26 +7115,28 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     means = [np.mean(group) for group in data_groups]
 
+    print(means)
 
 
 
+    # 绘制柱状图（均值）
     bars = ax[0].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
-
+        # 假设第五个柱状图（索引为4）是最佳结果
     best_index = 4
-    # best marker
+    # 添加星星标记在最佳柱子上方
     ax[0].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
 
-    # Add horizontal dashed lines to indicate the optimal baseline
+    # 添加水平虚线表示最佳基准线
     ax[0].axhline(y=best_value, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
 
-
+    # 美化图形
     ax[0].set_ylim(min_ylim, max_ylim)
-    ax[0].set_xlabel('Proportion of Synthetic Samples', fontsize=12)
-    ax[0].set_ylabel('nMAE', fontsize=12)
-    ax[0].set_title('Impacts of Synthetic Samples on ESDF under {}'.format(weather), fontsize=14)
+    ax[0].set_xlabel('Proportion of Synthetic Samples', fontsize=ticksize)
+    ax[0].set_ylabel('nMAE', fontsize=ticksize)
+    ax[0].set_title('Impacts of Synthetic Samples on ESDF under {}'.format(weather), fontsize=titlesize)
     ax[0].set_xticks(x_pos)
     ax[0].set_xticklabels(group_names)
     ax[0].tick_params(axis='both', labelsize=labelsize)
@@ -5995,30 +7148,30 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
     # RMSE
     p_1_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.1.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-1, 1].values
 
     p_2_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.25.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-1, 1].values
 
     p_3_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.5.csv'.format(country),
-        skiprows=1  
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-1, 1].values
 
     p_4_mae = pd.read_csv(
         'impact of proportion_proposed/{}_0.75.csv'.format(country),
-        skiprows=1 
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-1, 1].values
 
     p_5_mae = pd.read_csv(
         'impact of proportion_proposed/{}_1.csv'.format(country),
-        skiprows=1
+        skiprows=1  # 跳过第一行（表头）
     ).iloc[:-1, 1].values
 
-
+    # 计算每组的统计量
     data_groups = [p_1_mae, p_2_mae, p_3_mae, p_4_mae, p_5_mae]
     group_names = ['0.10', '0.25', '0.50', '0.75', '1.00']
 
@@ -6027,21 +7180,23 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     means = [np.mean(group) for group in data_groups]
 
+    print(means)
 
+    # 绘制柱状图（均值）
     bars = ax[1].bar(x_pos, means, bar_width, label='Mean',
                   color=color, alpha=0.7, edgecolor='black')
     best_index = 4
-    # best marker
+    # 添加星星标记在最佳柱子上方
     ax[1].plot(x_pos[best_index], means[-1] * 1.03, marker='*', markersize=15,
                color='gold', markeredgecolor='darkorange', markeredgewidth=1)
-    # Add horizontal dashed lines to indicate the optimal baseline
+    # 添加水平虚线表示最佳基准线
     ax[1].axhline(y=best_value_rmse, color='red', linestyle='--', alpha=0.7,
                   linewidth=1.5, label='best baseline')
-
+    # 美化图形
     ax[1].set_ylim(min_ylim+0.015, max_ylim+0.015)
-    ax[1].set_xlabel('Proportion of Synthetic Samples', fontsize=12)
-    ax[1].set_ylabel('nRMSE', fontsize=12)
-    ax[1].set_title('Impacts of Synthetic Samples on ESDF under {}'.format(weather), fontsize=14)
+    ax[1].set_xlabel('Proportion of Synthetic Samples', fontsize=ticksize)
+    ax[1].set_ylabel('nRMSE', fontsize=ticksize)
+    ax[1].set_title('Impacts of Synthetic Samples on ESDF under {}'.format(weather), fontsize=titlesize)
     ax[1].set_xticks(x_pos)
     ax[1].set_xticklabels(group_names)
     ax[1].tick_params(axis='both', labelsize=labelsize)
@@ -6051,17 +7206,10 @@ def ablation_on_proportion(country='Europe', titlesize=12, ticksize=12, labelsiz
 
     plt.tight_layout()
 
-    plt.savefig('figures/{}_proportion_ablation.pdf'.format(weather))
+    plt.savefig('source_figure_storage/figure_s6_{}'.format(weather))
     plt.show()
 
 #ablation_on_proportion('Europe')
 #ablation_on_proportion('PJM')
-
-
-
-
-
-
-
 
 
